@@ -2,724 +2,466 @@
 
 import { useState } from "react"
 
-// ─── TYPES ─────────────────────────────────────────────────────────────────────
 type Lang = "en" | "ru" | "zh" | "hi" | "es" | "pt"
 type Answers = Record<string, string | string[]>
 
-// ─── TRANSLATIONS ──────────────────────────────────────────────────────────────
+const LANG_LABELS: Record<Lang, string> = { en: "EN", ru: "RU", zh: "中文", hi: "हिं", es: "ES", pt: "PT" }
+const LANGS: Lang[] = ["en", "ru", "zh", "hi", "es", "pt"]
+
+const BLOCKS = [
+  { id: "A", questions: [
+    { key: "field", type: "single+other" },
+    { key: "exp", type: "single" },
+    { key: "degree", type: "single" },
+    { key: "role", type: "single+other" },
+  ]},
+  { id: "B", questions: [
+    { key: "awards", type: "multi+other" },
+    { key: "membership", type: "single+other" },
+    { key: "media", type: "multi+other" },
+    { key: "judging", type: "multi+other" },
+    { key: "contributions", type: "multi+other" },
+    { key: "articles", type: "multi+other" },
+    { key: "exhibitions", type: "single+other" },
+    { key: "critical_role", type: "single+other" },
+    { key: "salary", type: "single" },
+    { key: "commercial", type: "single" },
+  ]},
+  { id: "C", questions: [
+    { key: "niw_merit", type: "single+other" },
+    { key: "niw_importance", type: "single" },
+    { key: "niw_positioned", type: "multi+other" },
+    { key: "niw_justification", type: "single+other" },
+  ]},
+  { id: "D", questions: [
+    { key: "evidence", type: "multi" },
+  ]},
+]
+
+// Minimal translations structure - EN and RU full, others abbreviated
 const T: Record<Lang, Record<string, any>> = {
   en: {
     title: "Free EB1A / NIW Assessment",
-    subtitle: "12 questions. Objective analysis of your US immigration pathway.",
-    anonymous: "Anonymous · No personal data required · ~3 minutes",
-    start: "Start Assessment",
+    subtitle: "Answer questions about your professional profile. Get an objective analysis of your US immigration pathway.",
+    anonymous: "Anonymous · No personal data required · ~5 minutes",
+    start: "Start Free Assessment",
     next: "Continue",
     back: "Back",
     analyze: "Analyze My Profile",
-    analyzing: "Analyzing...",
+    analyzing: "Analyzing your profile...",
+    other_label: "Other / add your own:",
+    other_placeholder: "Describe in your own words...",
     result_title: "Your Assessment Result",
     eb1a: "EB1A — Extraordinary Ability",
     niw: "EB2-NIW — National Interest Waiver",
     strong: "Strong",
     moderate: "Moderate",
-    weak: "Weak — needs development",
+    weak: "Weak",
     strong_criteria: "Strong criteria",
-    weak_criteria: "Weak criteria",
+    weak_criteria: "Needs development",
     recommendation: "Recommendation",
     cta_build: "Build Your Case — $499",
     cta_expert: "Expert Review — $149",
-    cta_retake: "Retake",
-    block1_title: "Professional Background",
-    block2_title: "EB1A Criteria",
-    block3_title: "National Interest (NIW)",
-    step: (s: number, t: number) => `Step ${s} of ${t}`,
+    cta_retake: "Retake Assessment",
+    block_A: "Block A — Professional Profile",
+    block_B: "Block B — EB-1A Criteria (10)",
+    block_C: "Block C — National Interest Waiver (NIW)",
+    block_D: "Block D — Evidence Availability",
+    step: (s: number, total: number) => `Block ${s} of ${total}`,
     q: {
-      field: { label: "Primary professional field", opts: ["Technology & Engineering","Medicine & Healthcare","Science & Research","Business & Entrepreneurship","Law & Policy","Arts & Design","Education & Academia","Finance","Other"] },
+      field: { label: "Field of expertise", opts: ["Science / Research","Tech / Engineering","Business / Entrepreneurship","Medical / Healthcare","Arts / Creative","Law / Policy","Finance / Economics","Education"] },
       exp: { label: "Years of professional experience", opts: ["1–3 years","4–7 years","8–15 years","15+ years"] },
       degree: { label: "Highest academic degree", opts: ["Bachelor's","Master's","PhD / MD / JD","No degree"] },
-      role: { label: "Current professional role", opts: ["Employee / Specialist","Manager / Team Lead","Director / VP","C-Level / Founder","Independent Researcher"] },
-      awards: { label: "Professional awards or prizes", opts: ["None","Internal / corporate only","Regional or national level","International level"] },
-      pubs: { label: "Peer-reviewed publications", opts: ["None","1–5 publications","6–20 publications","20+ publications"] },
-      citations: { label: "Total citations of your work", opts: ["None / unknown","1–50 citations","50–200 citations","200+ citations"] },
-      judging: { label: "Peer review or jury activity", opts: ["None","Journal peer reviewer","Jury member in competitions or grants","Both"] },
-      media: { label: "Independent media coverage about you personally", opts: ["None","Industry or niche publications","National media","International media"] },
-      contrib: { label: "Original work adopted outside your organization", opts: ["None","Used internally only","Adopted by other organizations","Industry-wide or widely adopted"] },
-      salary: { label: "Your income relative to peers in your field and region", opts: ["Average or below","Above average","Top 10%","Top 5% or higher"] },
-      niw_impact: { label: "Your work directly impacts (select all that apply)", opts: ["National economy","Technology / competitiveness","Healthcare / public health","Education / research","Energy / infrastructure","National security","None of the above"], multi: true },
-      niw_positioned: { label: "How well are you positioned to execute your work in the US?", opts: ["Weak — no US connections or track record","Moderate — some connections or publications","Strong — US partners, contracts, or active collaborations"] },
-      niw_links: { label: "Existing connections to the United States", opts: ["None","Publications citing US research","US-based collaborators or partners","Contracts, LOIs, or funding from US organizations"] },
+      role: { label: "Current professional role", opts: ["Employee / Specialist","Manager / Team Lead","Director / VP","Founder / Co-Founder","Independent Expert / Consultant"] },
+      awards: { label: "Have you received professional awards recognized outside your employer?", sublabel: "Select all that apply", opts: ["International competitive award","National competitive award","Regional award","Internal / corporate only","None"] },
+      membership: { label: "Membership in associations requiring outstanding achievement", opts: ["Yes — competitive / exclusive membership","Yes — open / basic membership","No","Not sure"] },
+      media: { label: "Has a third-party media or publication featured you or your work?", sublabel: "Select all that apply", opts: ["National media","International media","Industry / niche media","Company press release only","None"] },
+      judging: { label: "Have you been invited to evaluate others' work?", sublabel: "Select all that apply", opts: ["Peer reviewer for journals","Competition judge","Grant / committee reviewer","Conference program committee","Not invited"] },
+      contributions: { label: "Original contribution used or cited by others outside your organization?", sublabel: "Select all that apply", opts: ["Patents or industry standards","Technology adopted by other organizations","Methodology widely referenced","Open source with significant adoption","None"] },
+      articles: { label: "Have you authored papers in professional publications?", sublabel: "Select all that apply", opts: ["Peer-reviewed journals (Scopus / WoS)","Conference proceedings","Industry publications","Books or book chapters","No publications"] },
+      exhibitions: { label: "Artistic exhibitions (arts / creative only — others choose N/A)", opts: ["International exhibitions","National exhibitions","Local exhibitions","Not applicable"] },
+      critical_role: { label: "Have you held a leading or critical role with measurable impact?", opts: ["Senior leadership (C-level, VP)","Director / Head of unit","Founder / key founding role","Critical technical / scientific role","No significant role"] },
+      salary: { label: "Your compensation relative to peers in your field and region", opts: ["Top 5% or higher","Top 10%","Above average","Average","Not sure"] },
+      commercial: { label: "Commercial success or measurable market impact (if applicable)", opts: ["Significant (major revenue / adoption)","Moderate","Limited","Not applicable"] },
+      niw_merit: { label: "What best describes your planned work in the United States?", sublabel: "NIW requires work with direct US national impact — beyond your personal career", opts: ["Scientific research with US national impact","Technology / product with measurable US impact","Public health / healthcare improvement for the US","US infrastructure / energy / environment","US education / national workforce development","Business only (local market, no broader national impact)"] },
+      niw_importance: { label: "Who will benefit from your work in the US?", sublabel: "National importance = impact beyond a single employer or local community", opts: ["Nationwide (all US)","Multi-state / regional","One city or local market only","Hard to define"] },
+      niw_positioned: { label: "Evidence that you are well-positioned to execute this work in the US?", sublabel: "Select all that apply", opts: ["US-based partners or collaborators","LOI or contracts from US organizations","Funding or grants related to this work","Publications directly relevant to the US endeavor","Track record of success in this field","Nothing yet"] },
+      niw_justification: { label: "Why should the US waive the normal job offer requirement for you?", sublabel: "The balance test — why is it in US national interest to waive PERM", opts: ["Urgent national need — delay would harm US interests","Unique expertise unavailable among US workers","Work benefits so significant that labor certification is impractical","Field where recruiting foreign nationals is standard (research, academia)"] },
+      evidence: { label: "Which evidence do you currently have available?", sublabel: "Select all that apply", opts: ["CV / Resume","Award certificates or diplomas","Publication PDFs or links","Proof of judging / peer review invitations","Letters of recommendation from experts","Employment letters with role description","Media articles about you","Salary / compensation documents","Patent documents","None yet"] },
     },
   },
   ru: {
     title: "Бесплатная оценка EB1A / NIW",
-    subtitle: "12 вопросов. Объективный анализ вашего иммиграционного пути в США.",
-    anonymous: "Анонимно · Личные данные не требуются · ~3 минуты",
-    start: "Начать оценку",
+    subtitle: "Ответьте на вопросы о вашем профессиональном профиле. Получите объективный анализ иммиграционного пути в США.",
+    anonymous: "Анонимно · Личные данные не требуются · ~5 минут",
+    start: "Начать бесплатную оценку",
     next: "Продолжить",
     back: "Назад",
     analyze: "Проанализировать профиль",
-    analyzing: "Анализируем...",
+    analyzing: "Анализируем ваш профиль...",
+    other_label: "Другое / свой вариант:",
+    other_placeholder: "Опишите своими словами...",
     result_title: "Результат оценки",
     eb1a: "EB1A — Экстраординарные способности",
     niw: "EB2-NIW — Национальный интерес",
     strong: "Сильный",
     moderate: "Средний",
-    weak: "Слабый — требует развития",
+    weak: "Слабый",
     strong_criteria: "Сильные критерии",
-    weak_criteria: "Слабые критерии",
+    weak_criteria: "Требует развития",
     recommendation: "Рекомендация",
     cta_build: "Построить кейс — $499",
     cta_expert: "Экспертная проверка — $149",
     cta_retake: "Пройти заново",
-    block1_title: "Профессиональный профиль",
-    block2_title: "Критерии EB1A",
-    block3_title: "Национальный интерес (NIW)",
-    step: (s: number, t: number) => `Шаг ${s} из ${t}`,
+    block_A: "Блок A — Профессиональный профиль",
+    block_B: "Блок B — Критерии EB-1A (10)",
+    block_C: "Блок C — Национальный интерес (NIW)",
+    block_D: "Блок D — Наличие доказательств",
+    step: (s: number, total: number) => `Блок ${s} из ${total}`,
     q: {
-      field: { label: "Основная профессиональная область", opts: ["Технологии и инжиниринг","Медицина и здравоохранение","Наука и исследования","Бизнес и предпринимательство","Право и политика","Искусство и дизайн","Образование и академия","Финансы","Другое"] },
+      field: { label: "Область экспертизы", opts: ["Наука / Исследования","Технологии / Инжиниринг","Бизнес / Предпринимательство","Медицина / Здравоохранение","Искусство / Творчество","Право / Политика","Финансы / Экономика","Образование"] },
       exp: { label: "Лет профессионального опыта", opts: ["1–3 года","4–7 лет","8–15 лет","15+ лет"] },
       degree: { label: "Высшая академическая степень", opts: ["Бакалавр","Магистр","PhD / MD / JD","Нет степени"] },
-      role: { label: "Текущая роль", opts: ["Сотрудник / Специалист","Менеджер / Руководитель группы","Директор / VP","C-Level / Основатель","Независимый исследователь"] },
-      awards: { label: "Профессиональные награды или премии", opts: ["Нет","Только внутренние / корпоративные","Региональный или национальный уровень","Международный уровень"] },
-      pubs: { label: "Рецензируемые публикации", opts: ["Нет","1–5 публикаций","6–20 публикаций","20+ публикаций"] },
-      citations: { label: "Общее число цитирований ваших работ", opts: ["Нет / не знаю","1–50 цитирований","50–200 цитирований","200+ цитирований"] },
-      judging: { label: "Рецензирование или участие в жюри", opts: ["Нет","Рецензент журналов","Член жюри конкурсов или грантов","Оба варианта"] },
-      media: { label: "Независимые публикации СМИ о вас лично", opts: ["Нет","Отраслевые или нишевые издания","Национальные СМИ","Международные СМИ"] },
-      contrib: { label: "Оригинальные разработки используются за пределами вашей организации", opts: ["Нет","Только внутри компании","Приняты другими организациями","Широко adopted в индустрии"] },
-      salary: { label: "Ваш доход относительно коллег в вашей области и регионе", opts: ["Средний или ниже","Выше среднего","Топ 10%","Топ 5% и выше"] },
-      niw_impact: { label: "Ваша работа напрямую влияет на (выберите все подходящие)", opts: ["Национальную экономику","Технологии / конкурентоспособность","Здравоохранение","Образование / науку","Энергетику / инфраструктуру","Национальную безопасность","Ничего из вышеперечисленного"], multi: true },
-      niw_positioned: { label: "Насколько вы готовы реализовывать свою работу в США?", opts: ["Слабо — нет связей или опыта в США","Умеренно — есть некоторые связи или публикации","Сильно — есть партнёры, контракты или активное сотрудничество"] },
-      niw_links: { label: "Существующие связи с США", opts: ["Нет","Публикации с цитированием американских исследований","Коллаборации с американскими организациями","Контракты, LOI или финансирование от американских организаций"] },
+      role: { label: "Текущая профессиональная роль", opts: ["Сотрудник / Специалист","Менеджер / Руководитель группы","Директор / VP","Основатель / Со-основатель","Независимый эксперт / Консультант"] },
+      awards: { label: "Получали ли вы профессиональные награды, признанные за пределами работодателя?", sublabel: "Выберите все подходящие варианты", opts: ["Международная конкурсная награда","Национальная конкурсная награда","Региональная награда","Только внутренняя / корпоративная","Нет"] },
+      membership: { label: "Членство в ассоциациях, требующих выдающихся достижений", opts: ["Да — конкурсное / эксклюзивное членство","Да — открытое / базовое членство","Нет","Не уверен"] },
+      media: { label: "Публиковали ли о вас материалы независимые СМИ или издания?", sublabel: "Выберите все подходящие варианты", opts: ["Национальные СМИ","Международные СМИ","Отраслевые / нишевые издания","Только корпоративный пресс-релиз","Нет"] },
+      judging: { label: "Приглашали ли вас оценивать работы других?", sublabel: "Выберите все подходящие варианты", opts: ["Рецензент журналов","Судья конкурсов","Рецензент грантов / комитетов","Член программного комитета конференции","Не приглашали"] },
+      contributions: { label: "Создавали ли вы оригинальный вклад, используемый другими за пределами вашей организации?", sublabel: "Выберите все подходящие варианты", opts: ["Патенты или отраслевые стандарты","Технология принята другими организациями","Методология широко цитируется","Open source со значительным adoption","Нет"] },
+      articles: { label: "Публиковали ли вы статьи в профессиональных изданиях?", sublabel: "Выберите все подходящие варианты", opts: ["Рецензируемые журналы (Scopus / WoS)","Труды конференций","Отраслевые издания","Книги или главы книг","Публикаций нет"] },
+      exhibitions: { label: "Художественные выставки (только для искусства / творчества — остальные выбирают N/A)", opts: ["Международные выставки","Национальные выставки","Местные выставки","Не применимо"] },
+      critical_role: { label: "Занимали ли вы руководящую или критическую роль с измеримым влиянием?", opts: ["Высшее руководство (C-level, VP)","Директор / Руководитель подразделения","Основатель / ключевая учредительная роль","Критическая техническая / научная роль","Значимой роли не было"] },
+      salary: { label: "Ваше вознаграждение относительно коллег в вашей области и регионе", opts: ["Топ 5% и выше","Топ 10%","Выше среднего","Среднее","Не уверен"] },
+      commercial: { label: "Коммерческий успех или измеримое влияние на рынок (если применимо)", opts: ["Значительный","Умеренный","Ограниченный","Не применимо"] },
+      niw_merit: { label: "Что лучше всего описывает вашу планируемую работу в США?", sublabel: "NIW требует работы с прямым национальным влиянием на США — за рамками личной карьеры", opts: ["Научные исследования с национальным влиянием на США","Технологии / продукт с измеримым влиянием на США","Улучшение здравоохранения для США","Инфраструктура / энергетика / экология США","Образование / развитие национальных кадров США","Только бизнес (локальный рынок, без национального влияния)"] },
+      niw_importance: { label: "Кто выиграет от вашей работы в США?", sublabel: "Национальное значение = влияние за пределами одного работодателя или местного сообщества", opts: ["Вся страна (все США)","Несколько штатов / регион","Только один город или местный рынок","Сложно определить"] },
+      niw_positioned: { label: "Есть ли у вас доказательства готовности выполнять эту работу в США?", sublabel: "Выберите все подходящие варианты", opts: ["Партнёры или коллаборации в США","LOI или контракты от американских организаций","Финансирование или гранты по этой теме","Публикации по теме деятельности в США","Подтверждённый опыт успеха в этой области","Пока ничего"] },
+      niw_justification: { label: "Почему США должны освободить вас от требования о предложении работы?", sublabel: "Балансовый тест — почему в интересах США отказаться от PERM", opts: ["Срочная национальная потребность — задержка нанесёт ущерб США","Уникальная экспертиза, недоступная среди американских работников","Польза настолько значительна, что трудовая сертификация нецелесообразна","Область, где привлечение иностранных специалистов является стандартом"] },
+      evidence: { label: "Какие доказательства у вас есть в наличии?", sublabel: "Выберите все подходящие варианты", opts: ["CV / Резюме","Сертификаты или дипломы о наградах","PDF публикаций или ссылки","Подтверждения рецензирования / приглашения в жюри","Рекомендательные письма от экспертов","Письма от работодателей с описанием роли","Медиа-статьи о вас","Документы о зарплате / вознаграждении","Патентные документы","Пока ничего"] },
     },
   },
   zh: {
-    title: "免费 EB1A / NIW 评估",
-    subtitle: "12个问题。客观分析您的美国移民路径。",
-    anonymous: "匿名 · 无需个人信息 · 约3分钟",
-    start: "开始评估",
-    next: "继续",
-    back: "返回",
-    analyze: "分析我的档案",
-    analyzing: "分析中...",
-    result_title: "评估结果",
-    eb1a: "EB1A — 杰出能力",
-    niw: "EB2-NIW — 国家利益豁免",
-    strong: "强",
-    moderate: "中等",
-    weak: "弱 — 需要加强",
-    strong_criteria: "强项标准",
-    weak_criteria: "弱项标准",
-    recommendation: "建议",
-    cta_build: "建立案例 — $499",
-    cta_expert: "专家审核 — $149",
-    cta_retake: "重新评估",
-    block1_title: "职业背景",
-    block2_title: "EB1A 标准",
-    block3_title: "国家利益 (NIW)",
-    step: (s: number, t: number) => `第 ${s} 步，共 ${t} 步`,
+    title: "免费 EB1A / NIW 评估", subtitle: "回答问题，获得您美国移民途径的客观分析。", anonymous: "匿名 · 无需个人数据 · 约5分钟", start: "开始免费评估", next: "继续", back: "返回", analyze: "分析我的档案", analyzing: "正在分析...", other_label: "其他：", other_placeholder: "用您自己的话描述...", result_title: "评估结果", eb1a: "EB1A — 杰出能力", niw: "EB2-NIW — 国家利益豁免", strong: "强", moderate: "中等", weak: "弱", strong_criteria: "强项", weak_criteria: "需要发展", recommendation: "建议", cta_build: "建立案例 — $499", cta_expert: "专家审核 — $149", cta_retake: "重新评估", block_A: "A — 职业档案", block_B: "B — EB-1A标准", block_C: "C — 国家利益(NIW)", block_D: "D — 证据", step: (s: number, t: number) => `第${s}块/共${t}块`,
     q: {
-      field: { label: "主要专业领域", opts: ["技术与工程","医学与医疗","科学与研究","商业与创业","法律与政策","艺术与设计","教育与学术","金融","其他"] },
+      field: { label: "专业领域", opts: ["科学/研究","技术/工程","商业/创业","医学/医疗","艺术/创意","法律/政策","金融/经济","教育"] },
       exp: { label: "职业经验年数", opts: ["1–3年","4–7年","8–15年","15年以上"] },
-      degree: { label: "最高学历", opts: ["学士","硕士","博士 / 医学博士 / 法学博士","无学位"] },
-      role: { label: "当前职业角色", opts: ["员工 / 专家","经理 / 团队负责人","总监 / 副总裁","高管 / 创始人","独立研究员"] },
-      awards: { label: "专业奖项或奖励", opts: ["无","仅内部 / 企业级","地区或国家级","国际级"] },
-      pubs: { label: "同行评审出版物", opts: ["无","1–5篇","6–20篇","20篇以上"] },
-      citations: { label: "您作品的总引用次数", opts: ["无 / 不知道","1–50次","50–200次","200次以上"] },
-      judging: { label: "同行评审或评审委员会活动", opts: ["无","期刊同行评审","竞赛或资助评审委员会","两者都有"] },
-      media: { label: "关于您个人的独立媒体报道", opts: ["无","行业或小众媒体","国家媒体","国际媒体"] },
-      contrib: { label: "在您的组织之外被采用的原创工作", opts: ["无","仅内部使用","被其他组织采用","行业广泛采用"] },
-      salary: { label: "您的收入与同领域同地区的同行相比", opts: ["平均或以下","高于平均","前10%","前5%或更高"] },
-      niw_impact: { label: "您的工作直接影响到（选择所有适用的）", opts: ["国家经济","技术 / 竞争力","医疗卫生","教育 / 研究","能源 / 基础设施","国家安全","以上均不适用"], multi: true },
-      niw_positioned: { label: "您在美国执行工作的准备程度如何？", opts: ["弱 — 没有美国联系或经验","中等 — 有一些联系或出版物","强 — 有美国合作伙伴、合同或积极合作"] },
-      niw_links: { label: "与美国的现有联系", opts: ["无","引用美国研究的出版物","与美国组织的合作","来自美国组织的合同、意向书或资金"] },
+      degree: { label: "最高学历", opts: ["学士","硕士","博士/医学博士/法学博士","无学位"] },
+      role: { label: "当前职业角色", opts: ["员工/专家","经理/团队负责人","总监/VP","创始人/联合创始人","独立专家/顾问"] },
+      awards: { label: "您是否获得过专业奖项？", sublabel: "选择所有适用项", opts: ["国际竞争性奖项","国家竞争性奖项","地区奖项","仅内部/企业奖项","无"] },
+      membership: { label: "需要杰出成就的协会会员资格", opts: ["是——竞争性/独家","是——开放/基本","否","不确定"] },
+      media: { label: "第三方媒体是否报道过您？", sublabel: "选择所有适用项", opts: ["国家媒体","国际媒体","行业媒体","仅公司新闻稿","无"] },
+      judging: { label: "您是否被邀请评估他人的工作？", sublabel: "选择所有适用项", opts: ["期刊同行评审员","竞赛评委","基金/委员会评审员","会议程序委员会","未被邀请"] },
+      contributions: { label: "您是否做出了被他人使用的原创贡献？", sublabel: "选择所有适用项", opts: ["专利或行业标准","被其他组织采用的技术","被广泛引用的方法论","重大开源项目","无"] },
+      articles: { label: "您是否在专业出版物上发表过文章？", sublabel: "选择所有适用项", opts: ["同行评审期刊","会议论文集","行业出版物","书籍","无出版物"] },
+      exhibitions: { label: "艺术展览（仅艺术/创意）", opts: ["国际展览","国家展览","地方展览","不适用"] },
+      critical_role: { label: "您是否担任过具有影响的领导角色？", opts: ["高级领导(C级、VP)","总监/部门负责人","创始人","关键技术角色","无重要角色"] },
+      salary: { label: "您的薪酬与同行相比", opts: ["前5%或更高","前10%","高于平均","平均","不确定"] },
+      commercial: { label: "商业成功（如适用）", opts: ["显著","适中","有限","不适用"] },
+      niw_merit: { label: "您在美国计划的工作是什么？", sublabel: "NIW需要对美国有直接国家影响的工作", opts: ["对美国有国家影响的科学研究","对美国有影响的技术/产品","改善美国公共卫生","美国基础设施/能源","美国教育/劳动力发展","仅本地商业"] },
+      niw_importance: { label: "谁将从您在美国的工作中受益？", sublabel: "国家重要性=超出单一雇主的影响", opts: ["全国（全美）","多州/地区","仅本地","难以定义"] },
+      niw_positioned: { label: "您是否有在美国执行工作的证据？", sublabel: "选择所有适用项", opts: ["美国合作伙伴","LOI或合同","相关资金/赠款","相关出版物","成功记录","暂无"] },
+      niw_justification: { label: "为什么美国应该豁免工作邀请要求？", sublabel: "平衡测试", opts: ["紧迫的国家需求","独特专业知识","工作价值极大","招募外国人是标准做法"] },
+      evidence: { label: "您目前有哪些证据？", sublabel: "选择所有适用项", opts: ["简历","奖项证书","出版物PDF","评审邀请","推荐信","就业信","媒体文章","薪资文件","专利文件","暂无"] },
     },
   },
   hi: {
-    title: "निःशुल्क EB1A / NIW मूल्यांकन",
-    subtitle: "12 प्रश्न। अमेरिकी आप्रवासन मार्ग का वस्तुनिष्ठ विश्लेषण।",
-    anonymous: "गुमनाम · कोई व्यक्तिगत डेटा आवश्यक नहीं · ~3 मिनट",
-    start: "मूल्यांकन शुरू करें",
-    next: "जारी रखें",
-    back: "वापस",
-    analyze: "मेरी प्रोफ़ाइल विश्लेषण करें",
-    analyzing: "विश्लेषण हो रहा है...",
-    result_title: "आपका मूल्यांकन परिणाम",
-    eb1a: "EB1A — असाधारण क्षमता",
-    niw: "EB2-NIW — राष्ट्रीय हित छूट",
-    strong: "मजबूत",
-    moderate: "मध्यम",
-    weak: "कमजोर — विकास की आवश्यकता",
-    strong_criteria: "मजबूत मानदंड",
-    weak_criteria: "कमजोर मानदंड",
-    recommendation: "सिफारिश",
-    cta_build: "केस बनाएं — $499",
-    cta_expert: "विशेषज्ञ समीक्षा — $149",
-    cta_retake: "फिर से लें",
-    block1_title: "व्यावसायिक पृष्ठभूमि",
-    block2_title: "EB1A मानदंड",
-    block3_title: "राष्ट्रीय हित (NIW)",
-    step: (s: number, t: number) => `चरण ${s} / ${t}`,
+    title: "निःशुल्क EB1A / NIW मूल्यांकन", subtitle: "प्रश्नों का उत्तर दें। अमेरिकी आप्रवासन मार्ग का विश्लेषण पाएं।", anonymous: "गुमनाम · ~5 मिनट", start: "मूल्यांकन शुरू करें", next: "जारी रखें", back: "वापस", analyze: "विश्लेषण करें", analyzing: "विश्लेषण हो रहा है...", other_label: "अन्य:", other_placeholder: "अपने शब्दों में...", result_title: "परिणाम", eb1a: "EB1A — असाधारण क्षमता", niw: "EB2-NIW — राष्ट्रीय हित", strong: "मजबूत", moderate: "मध्यम", weak: "कमजोर", strong_criteria: "मजबूत", weak_criteria: "विकास चाहिए", recommendation: "सिफारिश", cta_build: "केस बनाएं — $499", cta_expert: "विशेषज्ञ — $149", cta_retake: "फिर से", block_A: "A — प्रोफ़ाइल", block_B: "B — EB-1A", block_C: "C — NIW", block_D: "D — साक्ष्य", step: (s: number, t: number) => `${s}/${t}`,
     q: {
-      field: { label: "मुख्य व्यावसायिक क्षेत्र", opts: ["प्रौद्योगिकी और इंजीनियरिंग","चिकित्सा और स्वास्थ्य सेवा","विज्ञान और अनुसंधान","व्यापार और उद्यमिता","कानून और नीति","कला और डिजाइन","शिक्षा और शिक्षाविद","वित्त","अन्य"] },
-      exp: { label: "व्यावसायिक अनुभव के वर्ष", opts: ["1–3 वर्ष","4–7 वर्ष","8–15 वर्ष","15+ वर्ष"] },
-      degree: { label: "उच्चतम शैक्षणिक डिग्री", opts: ["स्नातक","मास्टर्स","PhD / MD / JD","कोई डिग्री नहीं"] },
-      role: { label: "वर्तमान भूमिका", opts: ["कर्मचारी / विशेषज्ञ","प्रबंधक / टीम लीड","निदेशक / VP","C-Level / संस्थापक","स्वतंत्र शोधकर्ता"] },
-      awards: { label: "व्यावसायिक पुरस्कार", opts: ["कोई नहीं","केवल आंतरिक / कॉर्पोरेट","क्षेत्रीय या राष्ट्रीय स्तर","अंतर्राष्ट्रीय स्तर"] },
-      pubs: { label: "पीयर-समीक्षित प्रकाशन", opts: ["कोई नहीं","1–5","6–20","20+"] },
-      citations: { label: "आपके काम के कुल उद्धरण", opts: ["कोई नहीं / अज्ञात","1–50","50–200","200+"] },
-      judging: { label: "पीयर समीक्षा या जूरी गतिविधि", opts: ["कोई नहीं","जर्नल पीयर समीक्षक","प्रतियोगिता या अनुदान जूरी सदस्य","दोनों"] },
-      media: { label: "आपके बारे में स्वतंत्र मीडिया कवरेज", opts: ["कोई नहीं","उद्योग या आला प्रकाशन","राष्ट्रीय मीडिया","अंतर्राष्ट्रीय मीडिया"] },
-      contrib: { label: "मूल कार्य जो आपके संगठन के बाहर अपनाया गया", opts: ["कोई नहीं","केवल आंतरिक उपयोग","अन्य संगठनों द्वारा अपनाया गया","उद्योग-व्यापी रूप से अपनाया गया"] },
-      salary: { label: "आपके क्षेत्र और क्षेत्र में साथियों की तुलना में आपकी आय", opts: ["औसत या नीचे","औसत से ऊपर","शीर्ष 10%","शीर्ष 5% या उससे अधिक"] },
-      niw_impact: { label: "आपका काम सीधे प्रभावित करता है (सभी लागू चुनें)", opts: ["राष्ट्रीय अर्थव्यवस्था","प्रौद्योगिकी / प्रतिस्पर्धात्मकता","स्वास्थ्य सेवा","शिक्षा / अनुसंधान","ऊर्जा / बुनियादी ढांचा","राष्ट्रीय सुरक्षा","उपरोक्त में से कोई नहीं"], multi: true },
-      niw_positioned: { label: "अमेरिका में अपना काम करने के लिए आप कितने तैयार हैं?", opts: ["कमजोर — कोई अमेरिकी संबंध नहीं","मध्यम — कुछ संबंध या प्रकाशन","मजबूत — अमेरिकी भागीदार, अनुबंध या सहयोग"] },
-      niw_links: { label: "अमेरिका के साथ मौजूदा संबंध", opts: ["कोई नहीं","अमेरिकी अनुसंधान उद्धृत करने वाले प्रकाशन","अमेरिकी संगठनों के साथ सहयोग","अमेरिकी संगठनों से अनुबंध या वित्त पोषण"] },
+      field: { label: "क्षेत्र", opts: ["विज्ञान","तकनीक","व्यापार","चिकित्सा","कला","कानून","वित्त","शिक्षा"] },
+      exp: { label: "अनुभव के वर्ष", opts: ["1–3","4–7","8–15","15+"] },
+      degree: { label: "डिग्री", opts: ["स्नातक","मास्टर्स","PhD/MD/JD","कोई नहीं"] },
+      role: { label: "भूमिका", opts: ["कर्मचारी","प्रबंधक","निदेशक","संस्थापक","स्वतंत्र विशेषज्ञ"] },
+      awards: { label: "पुरस्कार?", sublabel: "सभी चुनें", opts: ["अंतर्राष्ट्रीय","राष्ट्रीय","क्षेत्रीय","केवल आंतरिक","कोई नहीं"] },
+      membership: { label: "प्रतिष्ठित संगठनों में सदस्यता?", opts: ["हां — प्रतिस्पर्धी","हां — खुली","नहीं","निश्चित नहीं"] },
+      media: { label: "मीडिया कवरेज?", sublabel: "सभी चुनें", opts: ["राष्ट्रीय","अंतर्राष्ट्रीय","उद्योग","प्रेस विज्ञप्ति","कोई नहीं"] },
+      judging: { label: "दूसरों के काम का मूल्यांकन?", sublabel: "सभी चुनें", opts: ["जर्नल समीक्षक","प्रतियोगिता न्यायाधीश","अनुदान समीक्षक","सम्मेलन","नहीं"] },
+      contributions: { label: "मूल योगदान जो दूसरे उपयोग करते हैं?", sublabel: "सभी चुनें", opts: ["पेटेंट","अपनाई तकनीक","संदर्भित पद्धति","ओपन सोर्स","कोई नहीं"] },
+      articles: { label: "प्रकाशन?", sublabel: "सभी चुनें", opts: ["पीयर-समीक्षित","सम्मेलन","उद्योग","पुस्तकें","कोई नहीं"] },
+      exhibitions: { label: "कलात्मक प्रदर्शनियां (केवल कला)", opts: ["अंतर्राष्ट्रीय","राष्ट्रीय","स्थानीय","लागू नहीं"] },
+      critical_role: { label: "नेतृत्व भूमिका?", opts: ["C-level/VP","निदेशक","संस्थापक","तकनीकी","कोई नहीं"] },
+      salary: { label: "वेतन तुलना", opts: ["शीर्ष 5%","शीर्ष 10%","औसत से ऊपर","औसत","निश्चित नहीं"] },
+      commercial: { label: "व्यावसायिक सफलता?", opts: ["महत्वपूर्ण","मध्यम","सीमित","लागू नहीं"] },
+      niw_merit: { label: "अमेरिका में आपकी योजना?", sublabel: "अमेरिका पर प्रत्यक्ष राष्ट्रीय प्रभाव", opts: ["अमेरिकी वैज्ञानिक अनुसंधान","अमेरिकी तकनीक/उत्पाद","अमेरिकी स्वास्थ्य सेवा","अमेरिकी बुनियादी ढांचा","अमेरिकी शिक्षा","केवल स्थानीय व्यापार"] },
+      niw_importance: { label: "अमेरिका में लाभार्थी?", sublabel: "राष्ट्रीय = एकल नियोक्ता से परे", opts: ["पूरा अमेरिका","बहु-राज्य","केवल स्थानीय","अनिश्चित"] },
+      niw_positioned: { label: "अमेरिका में कार्य करने की क्षमता का प्रमाण?", sublabel: "सभी चुनें", opts: ["अमेरिकी भागीदार","LOI/अनुबंध","फंडिंग","प्रकाशन","सफलता का रिकॉर्ड","कुछ नहीं"] },
+      niw_justification: { label: "PERM छूट क्यों?", sublabel: "संतुलन परीक्षण", opts: ["राष्ट्रीय आवश्यकता","अद्वितीय कौशल","बहुत महत्वपूर्ण काम","मानक भर्ती प्रथा"] },
+      evidence: { label: "उपलब्ध साक्ष्य?", sublabel: "सभी चुनें", opts: ["CV","पुरस्कार प्रमाण","प्रकाशन","समीक्षा आमंत्रण","सिफारिश पत्र","रोजगार पत्र","मीडिया","वेतन दस्तावेज","पेटेंट","कुछ नहीं"] },
     },
   },
   es: {
-    title: "Evaluación Gratuita EB1A / NIW",
-    subtitle: "12 preguntas. Análisis objetivo de su camino de inmigración a EE.UU.",
-    anonymous: "Anónimo · Sin datos personales · ~3 minutos",
-    start: "Iniciar Evaluación",
-    next: "Continuar",
-    back: "Atrás",
-    analyze: "Analizar Mi Perfil",
-    analyzing: "Analizando...",
-    result_title: "Resultado de su Evaluación",
-    eb1a: "EB1A — Habilidad Extraordinaria",
-    niw: "EB2-NIW — Interés Nacional",
-    strong: "Fuerte",
-    moderate: "Moderado",
-    weak: "Débil — necesita desarrollo",
-    strong_criteria: "Criterios fuertes",
-    weak_criteria: "Criterios débiles",
-    recommendation: "Recomendación",
-    cta_build: "Construir Caso — $499",
-    cta_expert: "Revisión de Experto — $149",
-    cta_retake: "Repetir",
-    block1_title: "Perfil Profesional",
-    block2_title: "Criterios EB1A",
-    block3_title: "Interés Nacional (NIW)",
-    step: (s: number, t: number) => `Paso ${s} de ${t}`,
+    title: "Evaluación Gratuita EB1A / NIW", subtitle: "Responda preguntas sobre su perfil profesional.", anonymous: "Anónimo · ~5 minutos", start: "Iniciar Evaluación", next: "Continuar", back: "Atrás", analyze: "Analizar Mi Perfil", analyzing: "Analizando...", other_label: "Otro:", other_placeholder: "Describa...", result_title: "Resultado", eb1a: "EB1A — Habilidad Extraordinaria", niw: "EB2-NIW — Interés Nacional", strong: "Fuerte", moderate: "Moderado", weak: "Débil", strong_criteria: "Criterios fuertes", weak_criteria: "Necesita desarrollo", recommendation: "Recomendación", cta_build: "Construir Caso — $499", cta_expert: "Experto — $149", cta_retake: "Repetir", block_A: "A — Perfil", block_B: "B — Criterios EB-1A", block_C: "C — NIW", block_D: "D — Evidencia", step: (s: number, t: number) => `Bloque ${s} de ${t}`,
     q: {
-      field: { label: "Campo profesional principal", opts: ["Tecnología e Ingeniería","Medicina y Salud","Ciencia e Investigación","Negocios y Emprendimiento","Derecho y Política","Arte y Diseño","Educación y Academia","Finanzas","Otro"] },
-      exp: { label: "Años de experiencia profesional", opts: ["1–3 años","4–7 años","8–15 años","15+ años"] },
-      degree: { label: "Máximo grado académico", opts: ["Licenciatura","Maestría","PhD / MD / JD","Sin título"] },
-      role: { label: "Rol profesional actual", opts: ["Empleado / Especialista","Gerente / Líder de equipo","Director / VP","C-Level / Fundador","Investigador independiente"] },
-      awards: { label: "Premios o reconocimientos profesionales", opts: ["Ninguno","Solo interno / corporativo","Nivel regional o nacional","Nivel internacional"] },
-      pubs: { label: "Publicaciones revisadas por pares", opts: ["Ninguna","1–5","6–20","20+"] },
-      citations: { label: "Total de citas de su trabajo", opts: ["Ninguna / desconocido","1–50","50–200","200+"] },
-      judging: { label: "Actividad de revisión o jurado", opts: ["Ninguna","Revisor de revistas","Miembro del jurado en competencias","Ambos"] },
-      media: { label: "Cobertura mediática independiente sobre usted", opts: ["Ninguna","Publicaciones de industria","Medios nacionales","Medios internacionales"] },
-      contrib: { label: "Trabajo original adoptado fuera de su organización", opts: ["Ninguno","Solo uso interno","Adoptado por otras organizaciones","Ampliamente adoptado en la industria"] },
-      salary: { label: "Sus ingresos en comparación con colegas en su campo y región", opts: ["Promedio o por debajo","Por encima del promedio","Top 10%","Top 5% o más"] },
-      niw_impact: { label: "Su trabajo impacta directamente (seleccione todo lo que aplique)", opts: ["Economía nacional","Tecnología / competitividad","Salud pública","Educación / investigación","Energía / infraestructura","Seguridad nacional","Ninguno de los anteriores"], multi: true },
-      niw_positioned: { label: "¿Qué tan bien posicionado está para ejecutar su trabajo en EE.UU.?", opts: ["Débil — sin conexiones en EE.UU.","Moderado — algunas conexiones o publicaciones","Fuerte — socios, contratos o colaboraciones activas en EE.UU."] },
-      niw_links: { label: "Conexiones existentes con Estados Unidos", opts: ["Ninguna","Publicaciones que citan investigación estadounidense","Colaboradores o socios en EE.UU.","Contratos, LOIs o financiamiento de organizaciones estadounidenses"] },
+      field: { label: "Campo", opts: ["Ciencia","Tecnología","Negocios","Medicina","Arte","Derecho","Finanzas","Educación"] },
+      exp: { label: "Años de experiencia", opts: ["1–3","4–7","8–15","15+"] },
+      degree: { label: "Grado académico", opts: ["Licenciatura","Maestría","PhD/MD/JD","Sin título"] },
+      role: { label: "Rol actual", opts: ["Empleado","Gerente","Director/VP","Fundador","Consultor independiente"] },
+      awards: { label: "¿Premios reconocidos fuera de su empleador?", sublabel: "Todo lo que aplique", opts: ["Internacional","Nacional","Regional","Solo interno","Ninguno"] },
+      membership: { label: "¿Membresía que requiere logros?", opts: ["Sí — competitiva","Sí — abierta","No","No estoy seguro"] },
+      media: { label: "¿Medios de terceros lo han destacado?", sublabel: "Todo lo que aplique", opts: ["Nacional","Internacional","Industria","Solo corporativo","Ninguno"] },
+      judging: { label: "¿Invitado a evaluar trabajo de otros?", sublabel: "Todo lo que aplique", opts: ["Revisor de revistas","Juez de competencias","Revisor de becas","Comité conferencia","No"] },
+      contributions: { label: "¿Contribución original usada por otros?", sublabel: "Todo lo que aplique", opts: ["Patentes/estándares","Tecnología adoptada","Metodología citada","Código abierto","Ninguno"] },
+      articles: { label: "¿Artículos en publicaciones profesionales?", sublabel: "Todo lo que aplique", opts: ["Revistas revisadas","Conferencias","Industria","Libros","Sin publicaciones"] },
+      exhibitions: { label: "Exposiciones artísticas (solo arte)", opts: ["Internacional","Nacional","Local","No aplica"] },
+      critical_role: { label: "¿Rol de liderazgo con impacto?", opts: ["C-level/VP","Director","Fundador","Técnico crítico","Sin rol"] },
+      salary: { label: "Compensación vs. pares", opts: ["Top 5%","Top 10%","Por encima","Promedio","No sé"] },
+      commercial: { label: "Éxito comercial", opts: ["Significativo","Moderado","Limitado","No aplica"] },
+      niw_merit: { label: "¿Su trabajo planificado en EE.UU.?", sublabel: "NIW requiere impacto nacional directo en EE.UU.", opts: ["Investigación científica nacional","Tecnología con impacto en EE.UU.","Salud pública EE.UU.","Infraestructura EE.UU.","Educación/fuerza laboral EE.UU.","Solo negocio local"] },
+      niw_importance: { label: "¿Quién se beneficia en EE.UU.?", sublabel: "Importancia nacional = más allá de un empleador", opts: ["Todo EE.UU.","Multi-estatal","Solo local","Difícil definir"] },
+      niw_positioned: { label: "¿Evidencia de estar posicionado en EE.UU.?", sublabel: "Todo lo que aplique", opts: ["Socios en EE.UU.","LOI/contratos","Financiación","Publicaciones relevantes","Historial de éxito","Nada"] },
+      niw_justification: { label: "¿Por qué eximir oferta de trabajo?", sublabel: "Prueba de equilibrio", opts: ["Necesidad urgente","Experiencia única","Beneficios enormes","Campo estándar de extranjeros"] },
+      evidence: { label: "¿Qué evidencia tiene?", sublabel: "Todo lo que aplique", opts: ["CV","Certificados","Publicaciones","Prueba de revisión","Cartas de recomendación","Cartas de empleo","Medios","Salario","Patentes","Nada"] },
     },
   },
   pt: {
-    title: "Avaliação Gratuita EB1A / NIW",
-    subtitle: "12 perguntas. Análise objetiva do seu caminho de imigração para os EUA.",
-    anonymous: "Anônimo · Sem dados pessoais · ~3 minutos",
-    start: "Iniciar Avaliação",
-    next: "Continuar",
-    back: "Voltar",
-    analyze: "Analisar Meu Perfil",
-    analyzing: "Analisando...",
-    result_title: "Resultado da sua Avaliação",
-    eb1a: "EB1A — Habilidade Extraordinária",
-    niw: "EB2-NIW — Interesse Nacional",
-    strong: "Forte",
-    moderate: "Moderado",
-    weak: "Fraco — precisa de desenvolvimento",
-    strong_criteria: "Critérios fortes",
-    weak_criteria: "Critérios fracos",
-    recommendation: "Recomendação",
-    cta_build: "Construir Caso — $499",
-    cta_expert: "Revisão de Especialista — $149",
-    cta_retake: "Refazer",
-    block1_title: "Perfil Profissional",
-    block2_title: "Critérios EB1A",
-    block3_title: "Interesse Nacional (NIW)",
-    step: (s: number, t: number) => `Etapa ${s} de ${t}`,
+    title: "Avaliação Gratuita EB1A / NIW", subtitle: "Responda perguntas sobre seu perfil profissional.", anonymous: "Anônimo · ~5 minutos", start: "Iniciar Avaliação", next: "Continuar", back: "Voltar", analyze: "Analisar Perfil", analyzing: "Analisando...", other_label: "Outro:", other_placeholder: "Descreva...", result_title: "Resultado", eb1a: "EB1A — Habilidade Extraordinária", niw: "EB2-NIW — Interesse Nacional", strong: "Forte", moderate: "Moderado", weak: "Fraco", strong_criteria: "Critérios fortes", weak_criteria: "Precisa desenvolvimento", recommendation: "Recomendação", cta_build: "Construir Caso — $499", cta_expert: "Especialista — $149", cta_retake: "Refazer", block_A: "A — Perfil", block_B: "B — Critérios EB-1A", block_C: "C — NIW", block_D: "D — Evidências", step: (s: number, t: number) => `Bloco ${s} de ${t}`,
     q: {
-      field: { label: "Área profissional principal", opts: ["Tecnologia e Engenharia","Medicina e Saúde","Ciência e Pesquisa","Negócios e Empreendedorismo","Direito e Política","Arte e Design","Educação e Academia","Finanças","Outro"] },
-      exp: { label: "Anos de experiência profissional", opts: ["1–3 anos","4–7 anos","8–15 anos","15+ anos"] },
-      degree: { label: "Maior grau acadêmico", opts: ["Bacharelado","Mestrado","PhD / MD / JD","Sem diploma"] },
-      role: { label: "Função profissional atual", opts: ["Funcionário / Especialista","Gerente / Líder de equipe","Diretor / VP","C-Level / Fundador","Pesquisador independente"] },
-      awards: { label: "Prêmios ou reconhecimentos profissionais", opts: ["Nenhum","Apenas interno / corporativo","Nível regional ou nacional","Nível internacional"] },
-      pubs: { label: "Publicações revisadas por pares", opts: ["Nenhuma","1–5","6–20","20+"] },
-      citations: { label: "Total de citações do seu trabalho", opts: ["Nenhuma / desconhecido","1–50","50–200","200+"] },
-      judging: { label: "Atividade de revisão ou júri", opts: ["Nenhuma","Revisor de periódicos","Membro do júri em competições","Ambos"] },
-      media: { label: "Cobertura midiática independente sobre você", opts: ["Nenhuma","Publicações do setor","Mídia nacional","Mídia internacional"] },
-      contrib: { label: "Trabalho original adotado fora da sua organização", opts: ["Nenhum","Uso interno apenas","Adotado por outras organizações","Amplamente adotado na indústria"] },
-      salary: { label: "Sua renda em comparação com colegas na sua área e região", opts: ["Média ou abaixo","Acima da média","Top 10%","Top 5% ou mais"] },
-      niw_impact: { label: "Seu trabalho impacta diretamente (selecione todos que se aplicam)", opts: ["Economia nacional","Tecnologia / competitividade","Saúde pública","Educação / pesquisa","Energia / infraestrutura","Segurança nacional","Nenhum dos acima"], multi: true },
-      niw_positioned: { label: "Quão bem posicionado você está para executar seu trabalho nos EUA?", opts: ["Fraco — sem conexões nos EUA","Moderado — algumas conexões ou publicações","Forte — parceiros, contratos ou colaborações ativas nos EUA"] },
-      niw_links: { label: "Conexões existentes com os Estados Unidos", opts: ["Nenhuma","Publicações citando pesquisas americanas","Colaboradores ou parceiros nos EUA","Contratos, LOIs ou financiamento de organizações americanas"] },
+      field: { label: "Área", opts: ["Ciência","Tecnologia","Negócios","Medicina","Arte","Direito","Finanças","Educação"] },
+      exp: { label: "Anos de experiência", opts: ["1–3","4–7","8–15","15+"] },
+      degree: { label: "Grau acadêmico", opts: ["Bacharelado","Mestrado","PhD/MD/JD","Sem diploma"] },
+      role: { label: "Função atual", opts: ["Funcionário","Gerente","Diretor/VP","Fundador","Consultor independente"] },
+      awards: { label: "Prêmios reconhecidos fora do empregador?", sublabel: "Tudo que se aplica", opts: ["Internacional","Nacional","Regional","Apenas interno","Nenhum"] },
+      membership: { label: "Filiação que exige conquistas?", opts: ["Sim — competitiva","Sim — aberta","Não","Não tenho certeza"] },
+      media: { label: "Mídia de terceiros destacou você?", sublabel: "Tudo que se aplica", opts: ["Nacional","Internacional","Setor","Apenas corporativo","Nenhum"] },
+      judging: { label: "Convidado para avaliar outros?", sublabel: "Tudo que se aplica", opts: ["Revisor de periódicos","Juiz de competições","Revisor de bolsas","Comitê conferência","Não"] },
+      contributions: { label: "Contribuição original usada por outros?", sublabel: "Tudo que se aplica", opts: ["Patentes/padrões","Tecnologia adotada","Metodologia citada","Código aberto","Nenhum"] },
+      articles: { label: "Artigos em publicações profissionais?", sublabel: "Tudo que se aplica", opts: ["Periódicos revisados","Conferências","Setor","Livros","Sem publicações"] },
+      exhibitions: { label: "Exposições artísticas (apenas arte)", opts: ["Internacional","Nacional","Local","Não aplicável"] },
+      critical_role: { label: "Papel de liderança com impacto?", opts: ["C-level/VP","Diretor","Fundador","Técnico crítico","Sem papel"] },
+      salary: { label: "Remuneração vs. pares", opts: ["Top 5%","Top 10%","Acima da média","Média","Não sei"] },
+      commercial: { label: "Sucesso comercial", opts: ["Significativo","Moderado","Limitado","Não aplicável"] },
+      niw_merit: { label: "Seu trabalho planejado nos EUA?", sublabel: "NIW requer impacto nacional direto nos EUA", opts: ["Pesquisa científica nacional","Tecnologia com impacto nos EUA","Saúde pública EUA","Infraestrutura EUA","Educação EUA","Apenas negócio local"] },
+      niw_importance: { label: "Quem se beneficia nos EUA?", sublabel: "Importância nacional = além de um empregador", opts: ["Todo EUA","Multi-estadual","Apenas local","Difícil definir"] },
+      niw_positioned: { label: "Evidência de estar posicionado nos EUA?", sublabel: "Tudo que se aplica", opts: ["Parceiros nos EUA","LOI/contratos","Financiamento","Publicações relevantes","Histórico de sucesso","Nada"] },
+      niw_justification: { label: "Por que dispensar oferta de emprego?", sublabel: "Teste de equilíbrio", opts: ["Necessidade urgente","Expertise única","Benefícios enormes","Campo padrão para estrangeiros"] },
+      evidence: { label: "Que evidências você tem?", sublabel: "Tudo que se aplica", opts: ["CV","Certificados","Publicações","Prova de revisão","Cartas de recomendação","Cartas de emprego","Mídia","Salário","Patentes","Nada"] },
     },
   },
 }
 
-// ─── QUESTION KEYS IN ORDER ────────────────────────────────────────────────────
-const BLOCK1_KEYS = ["field", "exp", "degree", "role"]
-const BLOCK2_KEYS = ["awards", "pubs", "citations", "judging", "media", "contrib", "salary"]
-const BLOCK3_KEYS = ["niw_impact", "niw_positioned", "niw_links"]
-const ALL_KEYS = [...BLOCK1_KEYS, ...BLOCK2_KEYS, ...BLOCK3_KEYS]
-
-// ─── SCORING ───────────────────────────────────────────────────────────────────
 function computeScore(answers: Answers) {
   let eb1a = 0
   const strongEB1A: string[] = []
   const weakEB1A: string[] = []
-
-  const award = answers.awards as string
-  if (award === "3") { eb1a += 3; strongEB1A.push("Awards") }
-  else if (award === "2") { eb1a += 2; strongEB1A.push("Awards") }
-  else if (award === "1") { eb1a += 0.5; weakEB1A.push("Awards") }
+  const has = (key: string, idx: number) => {
+    const val = answers[key]
+    return Array.isArray(val) ? val.includes(String(idx)) : val === String(idx)
+  }
+  if (has("awards",0)){eb1a+=3;strongEB1A.push("Awards")}
+  else if(has("awards",1)){eb1a+=2;strongEB1A.push("Awards")}
+  else if(has("awards",2)){eb1a+=0.5;weakEB1A.push("Awards")}
   else weakEB1A.push("Awards")
 
-  const pubs = answers.pubs as string
-  if (pubs === "3") { eb1a += 3; strongEB1A.push("Publications") }
-  else if (pubs === "2") { eb1a += 2; strongEB1A.push("Publications") }
-  else if (pubs === "1") { eb1a += 1; weakEB1A.push("Publications") }
-  else weakEB1A.push("Publications")
+  if(has("membership",0)){eb1a+=2;strongEB1A.push("Membership")}
+  else weakEB1A.push("Membership")
 
-  const cit = answers.citations as string
-  if (cit === "3") eb1a += 2
-  else if (cit === "2") eb1a += 1.5
-  else if (cit === "1") eb1a += 0.5
-
-  const judging = answers.judging as string
-  if (judging === "2" || judging === "3") { eb1a += 2; strongEB1A.push("Judging") }
-  else if (judging === "1") { eb1a += 1.5; strongEB1A.push("Judging") }
-  else weakEB1A.push("Judging")
-
-  const media = answers.media as string
-  if (media === "3") { eb1a += 2; strongEB1A.push("Media") }
-  else if (media === "2") { eb1a += 1.5; strongEB1A.push("Media") }
-  else if (media === "1") { eb1a += 0.5; weakEB1A.push("Media") }
+  if(has("media",0)||has("media",1)){eb1a+=2;strongEB1A.push("Media")}
+  else if(has("media",2)){eb1a+=1;weakEB1A.push("Media")}
   else weakEB1A.push("Media")
 
-  const contrib = answers.contrib as string
-  if (contrib === "3") { eb1a += 3; strongEB1A.push("Contribution") }
-  else if (contrib === "2") { eb1a += 2; strongEB1A.push("Contribution") }
-  else if (contrib === "1") { eb1a += 0.5; weakEB1A.push("Contribution") }
-  else weakEB1A.push("Contribution")
+  const jc=[0,1,2,3].filter(i=>has("judging",i)).length
+  if(jc>=2){eb1a+=2;strongEB1A.push("Judging")}
+  else if(jc===1){eb1a+=1.5;strongEB1A.push("Judging")}
+  else weakEB1A.push("Judging")
 
-  const salary = answers.salary as string
-  if (salary === "3") { eb1a += 2; strongEB1A.push("High Salary") }
-  else if (salary === "2") { eb1a += 1.5; strongEB1A.push("High Salary") }
-  else if (salary === "1") { eb1a += 0.5; weakEB1A.push("High Salary") }
+  const cc=[0,1,2,3].filter(i=>has("contributions",i)).length
+  if(cc>=2){eb1a+=3;strongEB1A.push("Contributions")}
+  else if(cc===1){eb1a+=1.5;strongEB1A.push("Contributions")}
+  else weakEB1A.push("Contributions")
+
+  if(has("articles",0)){eb1a+=2.5;strongEB1A.push("Publications")}
+  else if(has("articles",1)||has("articles",2)){eb1a+=1;weakEB1A.push("Publications")}
+  else weakEB1A.push("Publications")
+
+  if(has("critical_role",0)||has("critical_role",2)){eb1a+=2;strongEB1A.push("Critical Role")}
+  else if(has("critical_role",1)||has("critical_role",3)){eb1a+=1.5;strongEB1A.push("Critical Role")}
+  else weakEB1A.push("Critical Role")
+
+  if(has("salary",0)){eb1a+=2;strongEB1A.push("High Salary")}
+  else if(has("salary",1)){eb1a+=1.5;strongEB1A.push("High Salary")}
+  else if(has("salary",2)){eb1a+=0.5;weakEB1A.push("High Salary")}
   else weakEB1A.push("High Salary")
 
-  // NIW
-  let niw = 0
-  const impact = (answers.niw_impact as string[]) || []
-  const realImpact = impact.filter(i => i !== "6")
-  if (realImpact.length >= 3) niw += 3
-  else if (realImpact.length === 2) niw += 2
-  else if (realImpact.length === 1) niw += 1
+  let niw=0
+  const merit=answers.niw_merit as string
+  if(merit&&merit!=="5") niw+=3
+  if(has("niw_importance",0)) niw+=3
+  else if(has("niw_importance",1)) niw+=2
+  else niw+=0.5
+  const pc=[0,1,2,3,4].filter(i=>has("niw_positioned",i)).length
+  niw+=Math.min(pc,3)
+  if(has("niw_justification",0)||has("niw_justification",1)) niw+=2
+  else niw+=1
 
-  const pos = answers.niw_positioned as string
-  if (pos === "2") niw += 3
-  else if (pos === "1") niw += 2
-  else niw += 0.5
-
-  const links = answers.niw_links as string
-  if (links === "3") niw += 2
-  else if (links === "2") niw += 1.5
-  else if (links === "1") niw += 1
-
-  const eb1aLevel = eb1a >= 10 ? "strong" : eb1a >= 6 ? "moderate" : "weak"
-  const niwLevel = niw >= 6 ? "strong" : niw >= 4 ? "moderate" : "weak"
-
-  return { eb1aLevel, niwLevel, strongEB1A, weakEB1A, eb1aScore: eb1a, niwScore: niw }
+  const eb1aLevel=eb1a>=11?"strong":eb1a>=6?"moderate":"weak"
+  const niwLevel=niw>=9?"strong":niw>=5?"moderate":"weak"
+  const uniq=(a:string[])=>[...new Set(a)]
+  return {eb1aLevel,niwLevel,strongEB1A:uniq(strongEB1A),weakEB1A:uniq(weakEB1A).filter(w=>!strongEB1A.includes(w))}
 }
 
-function getRecommendation(eb1aLevel: string, niwLevel: string, lang: Lang): string {
-  const recs: Record<Lang, Record<string, string>> = {
-    en: {
-      both_strong: "Both EB1A and NIW are viable for you. EB1A carries higher prestige but requires extraordinary evidence. Consider filing both simultaneously to maximize approval chances.",
-      eb1a_strong: "EB1A is your primary pathway. Your profile demonstrates strong extraordinary ability evidence across multiple criteria.",
-      niw_strong: "EB2-NIW is your strongest pathway. Your work has clear national importance and you are well-positioned to execute it in the US.",
-      both_moderate: "Both paths are possible but need strengthening. NIW is more accessible with your current profile — focus on demonstrating national importance.",
-      eb1a_moderate: "EB1A is possible but needs development. Focus on building 3 strong criteria before filing. Consider NIW as a parallel option.",
-      niw_moderate: "NIW is your best current option but needs strengthening. Document your national impact more concretely.",
-      weak: "Your current profile needs significant development before filing either petition. Focus on building evidence over the next 12–24 months.",
-    },
-    ru: {
-      both_strong: "И EB1A, и NIW реально достижимы для вас. EB1A престижнее, но требует исключительных доказательств. Рассмотрите подачу обоих одновременно.",
-      eb1a_strong: "EB1A — ваш основной путь. Профиль демонстрирует сильные доказательства по нескольким критериям.",
-      niw_strong: "EB2-NIW — ваш сильнейший путь. Ваша работа имеет чёткое национальное значение и вы хорошо позиционированы.",
-      both_moderate: "Оба пути возможны, но требуют усиления. NIW более доступен с текущим профилем.",
-      eb1a_moderate: "EB1A возможен, но требует развития. Нужно усилить минимум 3 критерия перед подачей.",
-      niw_moderate: "NIW — ваш лучший текущий вариант, но требует усиления доказательной базы.",
-      weak: "Профиль требует существенного развития перед подачей. Сосредоточьтесь на построении доказательств в ближайшие 12–24 месяца.",
-    },
-    zh: {
-      both_strong: "EB1A和NIW对您都是可行的。EB1A更具声望但需要非凡的证据。考虑同时申请两者以最大化批准机会。",
-      eb1a_strong: "EB1A是您的主要途径。您的档案在多个标准上显示出强大的杰出能力证据。",
-      niw_strong: "EB2-NIW是您最强的途径。您的工作具有明确的国家重要性，并且您在美国执行工作方面处于有利位置。",
-      both_moderate: "两条路径都可能，但需要加强。NIW在您目前的档案下更容易获得。",
-      eb1a_moderate: "EB1A是可能的，但需要发展。在申请前专注于建立3个强大的标准。",
-      niw_moderate: "NIW是您目前最好的选择，但需要更具体地记录国家影响。",
-      weak: "您目前的档案在申请任何一种申请之前需要大量发展。",
-    },
-    hi: {
-      both_strong: "EB1A और NIW दोनों आपके लिए व्यवहार्य हैं। अनुमोदन की संभावनाओं को अधिकतम करने के लिए दोनों को एक साथ दाखिल करने पर विचार करें।",
-      eb1a_strong: "EB1A आपका प्राथमिक मार्ग है। आपकी प्रोफ़ाइल कई मानदंडों में मजबूत असाधारण क्षमता साक्ष्य दर्शाती है।",
-      niw_strong: "EB2-NIW आपका सबसे मजबूत मार्ग है। आपके काम का स्पष्ट राष्ट्रीय महत्व है।",
-      both_moderate: "दोनों रास्ते संभव हैं लेकिन मजबूत बनाने की आवश्यकता है। NIW आपकी वर्तमान प्रोफ़ाइल के साथ अधिक सुलभ है।",
-      eb1a_moderate: "EB1A संभव है लेकिन विकास की आवश्यकता है।",
-      niw_moderate: "NIW आपका सबसे अच्छा विकल्प है लेकिन मजबूत करने की आवश्यकता है।",
-      weak: "आवेदन करने से पहले आपकी प्रोफ़ाइल को महत्वपूर्ण विकास की आवश्यकता है।",
-    },
-    es: {
-      both_strong: "Tanto EB1A como NIW son viables para usted. Considere presentar ambas simultáneamente para maximizar las posibilidades de aprobación.",
-      eb1a_strong: "EB1A es su camino principal. Su perfil demuestra evidencia sólida de habilidad extraordinaria en múltiples criterios.",
-      niw_strong: "EB2-NIW es su camino más sólido. Su trabajo tiene una clara importancia nacional.",
-      both_moderate: "Ambos caminos son posibles pero necesitan fortalecimiento. NIW es más accesible con su perfil actual.",
-      eb1a_moderate: "EB1A es posible pero necesita desarrollo. Enfóquese en construir 3 criterios sólidos antes de presentar.",
-      niw_moderate: "NIW es su mejor opción actual pero necesita fortalecer la documentación.",
-      weak: "Su perfil actual necesita un desarrollo significativo antes de presentar cualquier petición.",
-    },
-    pt: {
-      both_strong: "Tanto EB1A quanto NIW são viáveis para você. Considere apresentar ambas simultaneamente para maximizar as chances de aprovação.",
-      eb1a_strong: "EB1A é o seu caminho principal. Seu perfil demonstra forte evidência de habilidade extraordinária em múltiplos critérios.",
-      niw_strong: "EB2-NIW é o seu caminho mais forte. Seu trabalho tem clara importância nacional.",
-      both_moderate: "Ambos os caminhos são possíveis, mas precisam de fortalecimento. NIW é mais acessível com seu perfil atual.",
-      eb1a_moderate: "EB1A é possível, mas precisa de desenvolvimento. Concentre-se em construir 3 critérios sólidos antes de apresentar.",
-      niw_moderate: "NIW é sua melhor opção atual, mas precisa fortalecer a documentação.",
-      weak: "Seu perfil atual precisa de desenvolvimento significativo antes de apresentar qualquer petição.",
-    },
+function getRec(eb:string,niw:string,lang:Lang):string{
+  const r:Record<Lang,Record<string,string>>={
+    en:{both_strong:"Both EB1A and NIW are viable. Consider filing both simultaneously to maximize approval chances.",eb1a_strong:"EB1A is your primary path. Focus on assembling your top 3–5 criteria with solid documentation.",niw_strong:"EB2-NIW is your strongest path. Your work has clear US national importance and you are well-positioned.",both_moderate:"Both paths are possible but need strengthening. NIW is more accessible — focus on demonstrating US national impact.",eb1a_moderate:"EB1A is possible but needs development. Build 3 strong criteria with solid evidence before filing.",niw_moderate:"NIW is your best current option. Strengthen your case by documenting national US impact and securing connections.",weak:"Your profile needs significant development. Expert consultation will identify the fastest path forward."},
+    ru:{both_strong:"И EB1A, и NIW реально достижимы. Рассмотрите подачу обоих одновременно для максимальных шансов.",eb1a_strong:"EB1A — ваш основной путь. Соберите доказательства по топ 3–5 критериям.",niw_strong:"EB2-NIW — ваш сильнейший путь. Ваша работа имеет чёткое национальное значение для США.",both_moderate:"Оба пути возможны, но требуют усиления. NIW более доступен — фокус на национальном значении для США.",eb1a_moderate:"EB1A возможен, но требует развития. Усильте минимум 3 критерия перед подачей.",niw_moderate:"NIW — ваш лучший текущий вариант. Документируйте национальное значение и получайте американские связи.",weak:"Профиль требует существенного развития. Экспертная консультация определит быстрейший путь."},
+    zh:{both_strong:"EB1A和NIW都可行，建议同时申请。",eb1a_strong:"EB1A是您的主要途径，专注于建立3-5个强有力的标准。",niw_strong:"EB2-NIW是您最强的途径，您的工作对美国具有明确的国家重要性。",both_moderate:"两条路径都可能，NIW更容易，专注于美国国家影响。",eb1a_moderate:"EB1A可能，但需要发展，申请前建立3个强标准。",niw_moderate:"NIW是您目前最好的选择，加强国家影响的文件。",weak:"您的档案需要大量发展，建议专家咨询。"},
+    hi:{both_strong:"EB1A और NIW दोनों व्यवहार्य हैं।",eb1a_strong:"EB1A आपका मुख्य मार्ग है।",niw_strong:"NIW आपका सबसे मजबूत मार्ग है।",both_moderate:"दोनों संभव हैं लेकिन मजबूती चाहिए।",eb1a_moderate:"EB1A संभव है, 3 मजबूत मानदंड बनाएं।",niw_moderate:"NIW सबसे अच्छा विकल्प है।",weak:"प्रोफ़ाइल को विकास की जरूरत है।"},
+    es:{both_strong:"Tanto EB1A como NIW son viables. Considere presentar ambas.",eb1a_strong:"EB1A es su camino principal. Construya 3-5 criterios sólidos.",niw_strong:"NIW es su camino más fuerte. Su trabajo tiene clara importancia nacional para EE.UU.",both_moderate:"Ambos son posibles. NIW es más accesible.",eb1a_moderate:"EB1A posible pero necesita desarrollo.",niw_moderate:"NIW es su mejor opción actual.",weak:"Su perfil necesita desarrollo significativo."},
+    pt:{both_strong:"Tanto EB1A quanto NIW são viáveis.",eb1a_strong:"EB1A é o seu caminho principal.",niw_strong:"NIW é o seu caminho mais forte.",both_moderate:"Ambos possíveis, NIW mais acessível.",eb1a_moderate:"EB1A possível mas precisa desenvolvimento.",niw_moderate:"NIW é sua melhor opção.",weak:"Seu perfil precisa de desenvolvimento."},
   }
-
-  const key =
-    eb1aLevel === "strong" && niwLevel === "strong" ? "both_strong" :
-    eb1aLevel === "strong" ? "eb1a_strong" :
-    niwLevel === "strong" ? "niw_strong" :
-    eb1aLevel === "moderate" && niwLevel === "moderate" ? "both_moderate" :
-    eb1aLevel === "moderate" ? "eb1a_moderate" :
-    niwLevel === "moderate" ? "niw_moderate" : "weak"
-
-  return recs[lang][key]
+  const k=eb==="strong"&&niw==="strong"?"both_strong":eb==="strong"?"eb1a_strong":niw==="strong"?"niw_strong":eb==="moderate"&&niw==="moderate"?"both_moderate":eb==="moderate"?"eb1a_moderate":niw==="moderate"?"niw_moderate":"weak"
+  return r[lang][k]
 }
 
-// ─── LEVEL BADGE ───────────────────────────────────────────────────────────────
-function LevelBadge({ level, t }: { level: string; t: any }) {
-  const styles: Record<string, string> = {
-    strong: "bg-emerald-100 text-emerald-800 border border-emerald-200",
-    moderate: "bg-amber-100 text-amber-800 border border-amber-200",
-    weak: "bg-red-100 text-red-700 border border-red-200",
-  }
-  const labels: Record<string, string> = {
-    strong: t.strong,
-    moderate: t.moderate,
-    weak: t.weak,
-  }
-  return (
-    <span className={`text-sm font-semibold px-3 py-1 rounded-full ${styles[level]}`}>
-      {labels[level]}
-    </span>
-  )
-}
-
-// ─── MAIN COMPONENT ────────────────────────────────────────────────────────────
 export default function AssessmentPage() {
-  const [lang, setLang] = useState<Lang>("en")
-  const [step, setStep] = useState<"intro" | "block1" | "block2" | "block3" | "loading" | "result">("intro")
-  const [answers, setAnswers] = useState<Answers>({})
+  const [lang,setLang]=useState<Lang>("en")
+  const [blockIdx,setBlockIdx]=useState(-1)
+  const [answers,setAnswers]=useState<Answers>({})
+  const [other,setOther]=useState<Record<string,string>>({})
+  const t=T[lang]
+  const curBlock=BLOCKS[blockIdx]
 
-  const t = T[lang]
-
-  const set = (key: string, val: string) => setAnswers(p => ({ ...p, [key]: val }))
-
-  const toggleMulti = (key: string, idx: string) => {
-    const current = (answers[key] as string[]) || []
-    const updated = current.includes(idx)
-      ? current.filter(v => v !== idx)
-      : [...current, idx]
-    setAnswers(p => ({ ...p, [key]: updated }))
+  const setSingle=(key:string,val:string)=>setAnswers(p=>({...p,[key]:val}))
+  const toggleMulti=(key:string,idx:string)=>{
+    const cur=(answers[key] as string[])||[]
+    setAnswers(p=>({...p,[key]:cur.includes(idx)?cur.filter(v=>v!==idx):[...cur,idx]}))
   }
-
-  const isMulti = (key: string, idx: string) =>
-    ((answers[key] as string[]) || []).includes(idx)
-
-  const blockKeys: Record<string, string[]> = {
-    block1: BLOCK1_KEYS,
-    block2: BLOCK2_KEYS,
-    block3: BLOCK3_KEYS,
+  const isSel=(key:string,idx:string)=>{
+    const v=answers[key]
+    return Array.isArray(v)?v.includes(idx):v===idx
   }
-
-  const currentBlockComplete = (block: string) => {
-    return blockKeys[block]?.every(key => {
-      const q = t.q[key]
-      if (q?.multi) return ((answers[key] as string[]) || []).length > 0
-      return !!answers[key]
+  const blockOk=()=>{
+    if(!curBlock) return false
+    return curBlock.questions.every(({key,type})=>{
+      if(type.includes("multi")) return ((answers[key] as string[])||[]).length>0||!!other[key]
+      return !!answers[key]||!!other[key]
     })
   }
-
-  const handleNext = (current: string) => {
-    const flow: Record<string, string> = {
-      intro: "block1",
-      block1: "block2",
-      block2: "block3",
-      block3: "loading",
-    }
-    const next = flow[current]
-    if (next === "loading") {
-      setStep("loading")
-      setTimeout(() => setStep("result"), 2000)
-    } else {
-      setStep(next as any)
-    }
+  const goNext=()=>{
+    if(blockIdx===BLOCKS.length-1){setBlockIdx(BLOCKS.length);setTimeout(()=>setBlockIdx(BLOCKS.length+1),2000)}
+    else setBlockIdx(i=>i+1)
   }
 
-  const blockNum: Record<string, number> = { block1: 1, block2: 2, block3: 3 }
-
-  const LANGS: Lang[] = ["en", "ru", "zh", "hi", "es", "pt"]
-  const LANG_LABELS: Record<Lang, string> = { en: "EN", ru: "RU", zh: "中文", hi: "हिं", es: "ES", pt: "PT" }
-
-  // ── RENDER QUESTION ──
-  const renderQuestion = (key: string) => {
-    const q = t.q[key]
-    if (!q) return null
-
-    if (q.multi) {
-      return (
-        <div key={key} className="mb-6">
-          <p className="text-sm font-semibold text-slate-700 mb-3">{q.label}</p>
-          <div className="flex flex-wrap gap-2">
-            {q.opts.map((opt: string, i: number) => {
-              const idx = String(i)
-              const selected = isMulti(key, idx)
-              return (
-                <button
-                  key={i}
-                  onClick={() => toggleMulti(key, idx)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                    selected
-                      ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-blue-400 hover:text-blue-600"
-                  }`}
-                >
-                  {opt}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <div key={key} className="mb-6">
-        <p className="text-sm font-semibold text-slate-700 mb-3">{q.label}</p>
-        <div className="grid gap-2">
-          {q.opts.map((opt: string, i: number) => {
-            const idx = String(i)
-            const selected = answers[key] === idx
-            return (
-              <button
-                key={i}
-                onClick={() => set(key, idx)}
-                className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
-                  selected
-                    ? "bg-blue-600 text-white border-blue-600 shadow-md"
-                    : "bg-white text-slate-700 border-slate-200 hover:border-blue-400 hover:bg-blue-50"
-                }`}
-              >
+  const renderQ=(key:string,type:string)=>{
+    const q=t.q[key]; if(!q) return null
+    const multi=type.includes("multi")
+    const hasOth=type.includes("other")
+    return(
+      <div key={key} className="mb-8">
+        <p className="text-sm font-bold text-slate-800 mb-1">{q.label}</p>
+        {q.sublabel&&<p className="text-xs text-slate-500 mb-3">{q.sublabel}</p>}
+        <div className={multi?"flex flex-wrap gap-2":"grid gap-2"}>
+          {q.opts.map((opt:string,i:number)=>{
+            const idx=String(i),sel=isSel(key,idx)
+            return(
+              <button key={i} onClick={()=>multi?toggleMulti(key,idx):setSingle(key,idx)}
+                className={`${multi?"px-3 py-2":"w-full text-left px-4 py-3"} rounded-xl border text-sm font-medium transition-all ${sel?"bg-blue-600 text-white border-blue-600 shadow-md":"bg-white text-slate-700 border-slate-200 hover:border-blue-400 hover:bg-blue-50"}`}>
                 {opt}
               </button>
             )
           })}
         </div>
+        {hasOth&&(
+          <div className="mt-3">
+            <p className="text-xs text-slate-400 mb-1">{t.other_label}</p>
+            <textarea value={other[key]||""} onChange={e=>setOther(p=>({...p,[key]:e.target.value}))}
+              placeholder={t.other_placeholder} rows={2}
+              className="w-full text-sm border border-slate-200 rounded-xl px-3 py-2 resize-none focus:outline-none focus:border-blue-400 text-slate-700 placeholder-slate-300"/>
+          </div>
+        )}
       </div>
     )
   }
 
-  // ── RESULT ──
-  const renderResult = () => {
-    const { eb1aLevel, niwLevel, strongEB1A, weakEB1A } = computeScore(answers)
-    const rec = getRecommendation(eb1aLevel, niwLevel, lang)
-
-    return (
+  const renderResult=()=>{
+    const{eb1aLevel,niwLevel,strongEB1A,weakEB1A}=computeScore(answers)
+    const rec=getRec(eb1aLevel,niwLevel,lang)
+    const lc=(l:string)=>l==="strong"?"text-emerald-700 bg-emerald-50 border-emerald-200":l==="moderate"?"text-amber-700 bg-amber-50 border-amber-200":"text-red-600 bg-red-50 border-red-200"
+    const lt=(l:string)=>l==="strong"?t.strong:l==="moderate"?t.moderate:t.weak
+    return(
       <div className="max-w-2xl mx-auto px-4 py-10">
         <h1 className="text-2xl font-bold text-slate-900 mb-8 text-center">{t.result_title}</h1>
-
-        {/* Scores */}
-        <div className="grid grid-cols-1 gap-4 mb-8">
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 flex items-center justify-between shadow-sm">
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">EB1A</p>
-              <p className="font-semibold text-slate-800 text-sm">{t.eb1a}</p>
+        <div className="grid gap-3 mb-6">
+          {[{label:"EB1A",name:t.eb1a,level:eb1aLevel},{label:"NIW",name:t.niw,level:niwLevel}].map(item=>(
+            <div key={item.label} className="bg-white rounded-2xl border border-slate-200 p-5 flex items-center justify-between shadow-sm">
+              <div><p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">{item.label}</p><p className="font-semibold text-slate-800 text-sm">{item.name}</p></div>
+              <span className={`text-sm font-bold px-4 py-1.5 rounded-full border ${lc(item.level)}`}>{lt(item.level)}</span>
             </div>
-            <LevelBadge level={eb1aLevel} t={t} />
-          </div>
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 flex items-center justify-between shadow-sm">
-            <div>
-              <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">NIW</p>
-              <p className="font-semibold text-slate-800 text-sm">{t.niw}</p>
-            </div>
-            <LevelBadge level={niwLevel} t={t} />
-          </div>
+          ))}
         </div>
-
-        {/* Criteria breakdown */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-6 shadow-sm">
-          <div className="mb-4">
-            <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-2">{t.strong_criteria}</p>
-            <div className="flex flex-wrap gap-2">
-              {strongEB1A.length > 0
-                ? strongEB1A.map(c => (
-                    <span key={c} className="bg-emerald-100 text-emerald-800 text-xs font-medium px-3 py-1 rounded-full">{c}</span>
-                  ))
-                : <span className="text-slate-400 text-xs">—</span>}
-            </div>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-2">{t.weak_criteria}</p>
-            <div className="flex flex-wrap gap-2">
-              {weakEB1A.slice(0, 4).map(c => (
-                <span key={c} className="bg-red-100 text-red-700 text-xs font-medium px-3 py-1 rounded-full">{c}</span>
-              ))}
-            </div>
-          </div>
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-5 shadow-sm">
+          <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide mb-2">{t.strong_criteria}</p>
+          <div className="flex flex-wrap gap-2 mb-4">{strongEB1A.length>0?strongEB1A.map(c=><span key={c} className="bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full">{c}</span>):<span className="text-slate-400 text-xs">—</span>}</div>
+          <p className="text-xs font-bold text-red-600 uppercase tracking-wide mb-2">{t.weak_criteria}</p>
+          <div className="flex flex-wrap gap-2">{weakEB1A.slice(0,5).map(c=><span key={c} className="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded-full">{c}</span>)}</div>
         </div>
-
-        {/* Recommendation */}
         <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 mb-8">
-          <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2">{t.recommendation}</p>
+          <p className="text-xs font-bold text-blue-700 uppercase tracking-wide mb-2">{t.recommendation}</p>
           <p className="text-slate-700 text-sm leading-relaxed">{rec}</p>
         </div>
-
-        {/* CTAs */}
         <div className="grid gap-3">
-          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors shadow-md">
-            {t.cta_build}
-          </button>
-          <button className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-4 px-6 rounded-xl border border-slate-200 transition-colors">
-            {t.cta_expert}
-          </button>
-          <button
-            onClick={() => { setStep("intro"); setAnswers({}) }}
-            className="w-full text-slate-500 text-sm py-2 hover:text-slate-700 transition-colors"
-          >
-            {t.cta_retake}
-          </button>
+          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-colors shadow-md text-sm">{t.cta_build}</button>
+          <button className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-4 rounded-xl border border-slate-200 text-sm">{t.cta_expert}</button>
+          <button onClick={()=>{setBlockIdx(-1);setAnswers({});setOther({})}} className="text-slate-400 text-sm py-2 hover:text-slate-600">{t.cta_retake}</button>
         </div>
       </div>
     )
   }
 
-  // ── LAYOUT WRAPPER ──
-  return (
+  return(
     <div className="min-h-screen bg-slate-50">
-      {/* Top bar */}
       <div className="sticky top-0 z-50 bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           </div>
           <span className="font-bold text-slate-800 text-sm">CaseBuilder</span>
         </div>
-        {/* Language switcher */}
         <div className="flex gap-1">
-          {LANGS.map(l => (
-            <button
-              key={l}
-              onClick={() => setLang(l)}
-              className={`px-2 py-1 rounded text-xs font-semibold transition-colors ${
-                lang === l ? "bg-blue-600 text-white" : "text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              {LANG_LABELS[l]}
-            </button>
-          ))}
+          {LANGS.map(l=><button key={l} onClick={()=>setLang(l)} className={`px-2 py-1 rounded text-xs font-bold ${lang===l?"bg-blue-600 text-white":"text-slate-400 hover:text-slate-700"}`}>{LANG_LABELS[l]}</button>)}
         </div>
       </div>
 
-      {/* INTRO */}
-      {step === "intro" && (
+      {blockIdx===-1&&(
         <div className="max-w-lg mx-auto px-4 py-16 text-center">
           <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
+            <svg className="w-8 h-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
           </div>
           <h1 className="text-3xl font-bold text-slate-900 mb-4">{t.title}</h1>
-          <p className="text-slate-600 mb-3">{t.subtitle}</p>
+          <p className="text-slate-600 mb-3 leading-relaxed">{t.subtitle}</p>
           <p className="text-slate-400 text-sm mb-10">{t.anonymous}</p>
-          <button
-            onClick={() => setStep("block1")}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-10 py-4 rounded-xl transition-colors shadow-lg text-lg"
-          >
-            {t.start}
-          </button>
+          <button onClick={()=>setBlockIdx(0)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-10 py-4 rounded-xl shadow-lg text-lg">{t.start}</button>
         </div>
       )}
 
-      {/* BLOCKS */}
-      {(step === "block1" || step === "block2" || step === "block3") && (
+      {blockIdx>=0&&blockIdx<BLOCKS.length&&(
         <div className="max-w-2xl mx-auto px-4 py-8">
-          {/* Progress */}
-          <div className="flex items-center gap-3 mb-8">
-            {["block1", "block2", "block3"].map((b, i) => (
-              <div key={b} className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                  step === b ? "bg-blue-600 text-white" :
-                  ["block1","block2","block3"].indexOf(step) > i ? "bg-emerald-500 text-white" :
-                  "bg-slate-200 text-slate-500"
-                }`}>{i + 1}</div>
-                {i < 2 && <div className={`flex-1 h-0.5 w-8 ${["block1","block2","block3"].indexOf(step) > i ? "bg-emerald-400" : "bg-slate-200"}`} />}
+          <div className="flex items-center gap-2 mb-8">
+            {BLOCKS.map((b,i)=>(
+              <div key={b.id} className="flex items-center gap-2 flex-1">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${i<blockIdx?"bg-emerald-500 text-white":i===blockIdx?"bg-blue-600 text-white":"bg-slate-200 text-slate-500"}`}>{i<blockIdx?"✓":b.id}</div>
+                {i<BLOCKS.length-1&&<div className={`h-0.5 flex-1 ${i<blockIdx?"bg-emerald-400":"bg-slate-200"}`}/>}
               </div>
             ))}
-            <p className="ml-auto text-xs text-slate-400">{t.step(blockNum[step], 3)}</p>
+            <span className="text-xs text-slate-400 ml-2">{t.step(blockIdx+1,BLOCKS.length)}</span>
           </div>
-
-          <h2 className="text-xl font-bold text-slate-900 mb-6">
-            {t[`${step}_title` as keyof typeof t]}
-          </h2>
-
-          {blockKeys[step].map(key => renderQuestion(key))}
-
+          <h2 className="text-xl font-bold text-slate-900 mb-6">{t[`block_${BLOCKS[blockIdx].id}`]}</h2>
+          {curBlock.questions.map(({key,type})=>renderQ(key,type))}
           <div className="flex gap-3 mt-8">
-            {step !== "block1" && (
-              <button
-                onClick={() => {
-                  const prev: Record<string, string> = { block2: "block1", block3: "block2" }
-                  setStep(prev[step] as any)
-                }}
-                className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-100 transition-colors"
-              >
-                {t.back}
-              </button>
-            )}
-            <button
-              onClick={() => handleNext(step)}
-              disabled={!currentBlockComplete(step)}
-              className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-            >
-              {step === "block3" ? t.analyze : t.next}
+            {blockIdx>0&&<button onClick={()=>setBlockIdx(i=>i-1)} className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 text-sm">{t.back}</button>}
+            <button onClick={goNext} disabled={!blockOk()} className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-sm">
+              {blockIdx===BLOCKS.length-1?t.analyze:t.next}
             </button>
           </div>
         </div>
       )}
 
-      {/* LOADING */}
-      {step === "loading" && (
+      {blockIdx===BLOCKS.length&&(
         <div className="max-w-lg mx-auto px-4 py-24 text-center">
-          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-6" />
+          <div className="w-14 h-14 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-6"/>
           <p className="text-slate-600 font-medium">{t.analyzing}</p>
         </div>
       )}
 
-      {/* RESULT */}
-      {step === "result" && renderResult()}
+      {blockIdx===BLOCKS.length+1&&renderResult()}
     </div>
   )
 }
