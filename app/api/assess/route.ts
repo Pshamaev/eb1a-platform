@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(req: NextRequest) {
   try {
-    const { answers, lang } = await req.json()
+    const { answers, other, lang, cvText } = await req.json()
 
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) {
@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
 
 A potential client has completed an assessment questionnaire. Analyze their profile and provide a detailed, honest assessment.
 
+${cvText ? `\nCV SUMMARY FROM UPLOADED DOCUMENT:\n${cvText}\n` : ""}
 CLIENT PROFILE:
 - Field: ${answers.field_text || answers.field}
 - Experience: ${answers.exp}
