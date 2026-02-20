@@ -543,10 +543,7 @@ const [cvParsed, setCvParsed] = useState(false)
           <span onClick={() => { setBlockIdx(-1); setAnswers({}); setOther({}); setAiResult(null); setAiError(false); setCvParsed(false) }} className="font-bold text-slate-800 text-sm cursor-pointer hover:text-blue-600">CaseBuilder</span>
         </div>
         <div className="flex gap-1">
-          {LANGS.map(l => <button key={l} onClick={() => setLang(l)} className={`px-2 py-1 rounded text-xs font-bold ${lang === l ? "bg-blue-600 text-white" : "text-slate-400 hover:text-slate-700"}`}>{LANG_LABELS[l]}</button>)}
-        </div>
-      </div>
-      </div>
+       </div>
       <div className="flex items-center gap-2">
         {LANGS.map(l => <button key={l} onClick={() => setLang(l)} className={`px-2 py-1 rounded text-xs font-bold ${lang === l ? "bg-blue-600 text-white" : "text-slate-400 hover:text-slate-700"}`}>{LANG_LABELS[l]}</button>)}
         <SignedOut>
