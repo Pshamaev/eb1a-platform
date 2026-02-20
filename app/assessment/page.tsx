@@ -518,7 +518,27 @@ const [chatLoading, setChatLoading] = useState(false)
           <h1 className="text-3xl font-bold text-slate-900 mb-4">{t.title}</h1>
           <p className="text-slate-600 mb-3 leading-relaxed">{t.subtitle}</p>
           <p className="text-slate-400 text-sm mb-10">{t.anonymous}</p>
-          <button onClick={() => setBlockIdx(0)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-10 py-4 rounded-xl shadow-lg text-lg">{t.start}</button>
+          {cvParsing ? (
+  <div className="flex items-center gap-3 justify-center mb-6">
+    <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+    <span className="text-slate-600 text-sm">Reading your CV...</span>
+  </div>
+) : cvParsed ? (
+  <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-6 flex items-center gap-2">
+    <span className="text-green-600">✓</span>
+    <span className="text-green-700 text-sm font-medium">CV analyzed — questionnaire pre-filled!</span>
+  </div>
+) : (
+  <label className="cursor-pointer block mb-4">
+    <div className="border-2 border-dashed border-slate-200 rounded-xl px-6 py-4 hover:border-blue-400 hover:bg-blue-50 transition-all text-center">
+      <p className="text-slate-500 text-sm">📎 Upload CV to pre-fill answers (optional)</p>
+      <p className="text-slate-400 text-xs mt-1">PDF or DOCX · Max 10MB</p>
+    </div>
+    <input type="file" accept=".pdf,.docx" className="hidden"
+      onChange={e => { const f = e.target.files?.[0]; if (f) handleCvUpload(f) }} />
+  </label>
+)}
+<button onClick={() => setBlockIdx(0)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-10 py-4 rounded-xl shadow-lg text-lg">{t.start}</button>
         </div>
       )}
 
