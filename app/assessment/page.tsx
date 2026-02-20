@@ -312,6 +312,7 @@ const [chatLoading, setChatLoading] = useState(false)
   }
 
   const goNext = async () => {
+    window.scrollTo({ top: 0, behavior: "smooth" })
     if (blockIdx === BLOCKS.length - 1) {
       setBlockIdx(BLOCKS.length) // loading
       try {
