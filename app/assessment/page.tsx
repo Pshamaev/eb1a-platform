@@ -274,6 +274,9 @@ const [chatEmail, setChatEmail] = useState("")
 const [chatMsg, setChatMsg] = useState("")
 const [chatSent, setChatSent] = useState(false)
 const [chatLoading, setChatLoading] = useState(false)
+  const [cvFile, setCvFile] = useState<File | null>(null)
+const [cvParsing, setCvParsing] = useState(false)
+const [cvParsed, setCvParsed] = useState(false)
   const t = T[lang]
   const curBlock = BLOCKS[blockIdx]
 
@@ -386,6 +389,37 @@ const [chatLoading, setChatLoading] = useState(false)
     setChatSent(true)
   } catch (e) {}
   setChatLoading(false)
+}
+  const handleCvUpload = async (file: File) => {
+  setCvFile(file)
+  setCvParsing(true)
+  try {
+    const formData = new FormData()
+    formData.append("cv", file)
+    formData.append("lang", lang)
+    const res = await fetch("/api/parse-cv", { method: "POST", body: formData })
+    if (res.ok) {
+      const data = await res.json()
+      const newAnswers: Answers = {}
+      if (data.field !== null) newAnswers.field = String(data.field)
+      if (data.exp !== null) newAnswers.exp = String(data.exp)
+      if (data.degree !== null) newAnswers.degree = String(data.degree)
+      if (data.role !== null) newAnswers.role = String(data.role)
+      if (data.awards) newAnswers.awards = data.awards.map(String)
+      if (data.membership !== null) newAnswers.membership = String(data.membership)
+      if (data.media) newAnswers.media = data.media.map(String)
+      if (data.judging) newAnswers.judging = data.judging.map(String)
+      if (data.contributions) newAnswers.contributions = data.contributions.map(String)
+      if (data.articles) newAnswers.articles = data.articles.map(String)
+      if (data.critical_role !== null) newAnswers.critical_role = String(data.critical_role)
+      if (data.salary !== null) newAnswers.salary = String(data.salary)
+      setAnswers(newAnswers)
+      if (data.role_text) setOther(p => ({ ...p, role: data.role_text }))
+      if (data.field_text) setOther(p => ({ ...p, field: data.field_text }))
+      setCvParsed(true)
+    }
+  } catch (e) {}
+  setCvParsing(false)
 }
   const renderResult = () => {
     const r = aiResult
