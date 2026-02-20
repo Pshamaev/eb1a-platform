@@ -79,7 +79,11 @@ Return ONLY a JSON object with these exact keys (use null if information not fou
   .replace(/\/\/.*$/gm, "")
   .replace(/\/\*[\s\S]*?\*\//g, "")
   .trim()
-    const result = JSON.parse(cleaned)
+    console.log("Gemini raw response:", text.substring(0, 500))
+if (!cleaned || cleaned.length < 10) {
+  return NextResponse.json({ error: "Empty response" }, { status: 500 })
+}
+const result = JSON.parse(cleaned)
 
     return NextResponse.json(result)
 
