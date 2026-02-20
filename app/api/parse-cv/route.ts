@@ -74,6 +74,8 @@ Return ONLY a JSON object with these exact keys (use null if information not fou
 
     const data = await response.json()
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
+   console.log("Gemini raw response:", text.substring(0, 500))
+const cleaned = text
     const cleaned = text
   .replace(/```json|```/g, "")
   .replace(/\/\/.*$/gm, "")
