@@ -359,6 +359,15 @@ export default function AssessmentPage() {
     )
   }
 
+  const handleCheckout = async (product: string) => {
+  const res = await fetch("/api/checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ product }),
+  })
+  const data = await res.json()
+  if (data.url) window.location.href = data.url
+}
   const renderResult = () => {
     const r = aiResult
     const lc = (l: string) => l === "strong" ? "text-emerald-700 bg-emerald-50 border-emerald-200" : l === "moderate" ? "text-amber-700 bg-amber-50 border-amber-200" : "text-red-600 bg-red-50 border-red-200"
@@ -459,7 +468,8 @@ export default function AssessmentPage() {
 
         {/* CTAs */}
         <div className="grid gap-3">
-          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-colors shadow-md text-sm">{t.cta_build}</button>
+          <button onClick={() => handleCheckout("build")} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-colors shadow-md text-sm">{t.cta_build}</button>
+          <button onClick={() => handleCheckout("expert")} className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-4 rounded-xl border border-slate-200 text-sm">{t.cta_expert}</button>
           <button className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-4 rounded-xl border border-slate-200 text-sm">{t.cta_expert}</button>
           <button onClick={() => { setBlockIdx(-1); setAnswers({}); setOther({}); setAiResult(null); setAiError(false) }}
             className="text-slate-400 text-sm py-2 hover:text-slate-600">{t.cta_retake}</button>
