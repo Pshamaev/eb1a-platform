@@ -268,7 +268,12 @@ export default function AssessmentPage() {
   const [other, setOther] = useState<Record<string, string>>({})
   const [aiResult, setAiResult] = useState<any>(null)
   const [aiError, setAiError] = useState(false)
-
+const [chatOpen, setChatOpen] = useState(false)
+const [chatName, setChatName] = useState("")
+const [chatEmail, setChatEmail] = useState("")
+const [chatMsg, setChatMsg] = useState("")
+const [chatSent, setChatSent] = useState(false)
+const [chatLoading, setChatLoading] = useState(false)
   const t = T[lang]
   const curBlock = BLOCKS[blockIdx]
 
@@ -367,6 +372,19 @@ export default function AssessmentPage() {
   })
   const data = await res.json()
   if (data.url) window.location.href = data.url
+}
+  const sendChat = async () => {
+  if (!chatName || !chatEmail || !chatMsg) return
+  setChatLoading(true)
+  try {
+    await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: chatName, email: chatEmail, message: chatMsg, lang })
+    })
+    setChatSent(true)
+  } catch (e) {}
+  setChatLoading(false)
 }
   const renderResult = () => {
     const r = aiResult
@@ -533,6 +551,48 @@ export default function AssessmentPage() {
       )}
 
       {blockIdx === BLOCKS.length + 1 && renderResult()}
+   <div className="fixed bottom-6 right-6 z-50">
+  {chatOpen && (
+    <div className="mb-3 bg-white rounded-2xl shadow-2xl border border-slate-200 w-80 overflow-hidden">
+      <div className="bg-blue-600 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+          <span className="text-white text-sm font-semibold">Ask Platon</span>
+        </div>
+        <button onClick={() => setChatOpen(false)} className="text-white/70 hover:text-white text-lg">×</button>
+      </div>
+      {chatSent ? (
+        <div className="p-6 text-center">
+          <div className="text-3xl mb-2">✓</div>
+          <p className="text-slate-700 font-semibold text-sm">Message sent!</p>
+          <p className="text-slate-400 text-xs mt-1">We&apos;ll reply within 24 hours</p>
+        </div>
+      ) : (
+        <div className="p-4 space-y-3">
+          <p className="text-xs text-slate-500">Have a question? Send us a message — we reply within 24 hours.</p>
+          <input value={chatName} onChange={e => setChatName(e.target.value)}
+            placeholder="Your name" className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400" />
+          <input value={chatEmail} onChange={e => setChatEmail(e.target.value)}
+            placeholder="Your email" type="email" className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400" />
+          <textarea value={chatMsg} onChange={e => setChatMsg(e.target.value)}
+            placeholder="Your question..." rows={3} className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-blue-400" />
+          <button onClick={sendChat} disabled={chatLoading || !chatName || !chatEmail || !chatMsg}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 rounded-lg disabled:opacity-40">
+            {chatLoading ? "Sending..." : "Send Message"}
+          </button>
+        </div>
+      )}
+    </div>
+  )}
+  <button onClick={() => setChatOpen(o => !o)}
+    className="w-14 h-14 bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg flex items-center justify-center transition-all">
+    {chatOpen ? (
+      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+    ) : (
+      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+    )}
+  </button>
+</div>
     </div>
   )
 }
