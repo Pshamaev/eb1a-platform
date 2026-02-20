@@ -74,7 +74,11 @@ Return ONLY a JSON object with these exact keys (use null if information not fou
 
     const data = await response.json()
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
-    const cleaned = text.replace(/```json|```/g, "").trim()
+    const cleaned = text
+  .replace(/```json|```/g, "")
+  .replace(/\/\/.*$/gm, "")
+  .replace(/\/\*[\s\S]*?\*\//g, "")
+  .trim()
     const result = JSON.parse(cleaned)
 
     return NextResponse.json(result)
