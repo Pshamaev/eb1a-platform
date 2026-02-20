@@ -393,7 +393,7 @@ const [cvParsed, setCvParsed] = useState(false)
 }
   const handleCvUpload = async (file: File) => {
   setCvFile(file)
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100)
   setCvParsing(true)
   try {
     const formData = new FormData()
