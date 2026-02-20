@@ -316,7 +316,7 @@ const [cvParsed, setCvParsed] = useState(false)
   }
 
   const goNext = async () => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    document.getElementById("top")?.scrollIntoView({ behavior: "smooth" })
     if (blockIdx === BLOCKS.length - 1) {
       setBlockIdx(BLOCKS.length) // loading
       try {
@@ -534,7 +534,7 @@ const [cvParsed, setCvParsed] = useState(false)
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div id="top" className="min-h-screen bg-slate-50">
       <div className="sticky top-0 z-50 bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
