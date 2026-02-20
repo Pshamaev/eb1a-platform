@@ -557,7 +557,7 @@ const [chatLoading, setChatLoading] = useState(false)
       <div className="bg-blue-600 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-          <span className="text-white text-sm font-semibold">Ask Platon</span>
+          <span className="text-white text-sm font-semibold">Contact Us</span>
         </div>
         <button onClick={() => setChatOpen(false)} className="text-white/70 hover:text-white text-lg">×</button>
       </div>
