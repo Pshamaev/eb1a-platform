@@ -316,7 +316,7 @@ const [cvParsed, setCvParsed] = useState(false)
   }
 
   const goNext = async () => {
-    document.getElementById("top")?.scrollIntoView({ behavior: "smooth" })
+    window.scrollTo(0, 0)
     if (blockIdx === BLOCKS.length - 1) {
       setBlockIdx(BLOCKS.length) // loading
       try {
