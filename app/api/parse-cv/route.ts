@@ -61,7 +61,7 @@ Return ONLY a JSON object with these exact keys (use null if information not fou
               { text: prompt }
             ]
           }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 2000 }
+          generationConfig: { temperature: 0.1, maxOutputTokens: 8000 }
         })
       }
     )
