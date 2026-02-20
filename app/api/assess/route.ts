@@ -68,7 +68,7 @@ Provide your analysis in this EXACT JSON format (no markdown, no backticks, pure
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 1500 }
+          generationConfig: { temperature: 0.3, maxOutputTokens: 3000 }
         })
       }
     )
