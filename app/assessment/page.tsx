@@ -554,6 +554,7 @@ const [cvParsed, setCvParsed] = useState(false)
           <UserButton />
         </SignedIn>
       </div>
+      </div>
 
       {blockIdx === -1 && (
         <div className="max-w-lg mx-auto px-4 py-16 text-center">
