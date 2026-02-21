@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
+import { createClient } from "@supabase/supabase-js"
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export async function POST(req: NextRequest) {
   try {
-    const { answers, other, lang, cvText } = await req.json()
+    const { answers, other, lang, cvText, userId } = await req.json()
 
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) {
@@ -83,9 +89,19 @@ Provide your analysis in this EXACT JSON format (no markdown, no backticks, pure
     const data = await response.json()
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || ""
 
-    // Clean and parse JSON
     const cleaned = text.replace(/```json|```/g, "").trim()
     const result = JSON.parse(cleaned)
+
+    // Сохраняем в Supabase если пользователь залогинен
+    if (userId) {
+      await supabase.from("assessments").insert({
+        user_id: userId,
+        lang,
+        answers,
+        ai_result: result,
+        cv_text: cvText || null
+      })
+    }
 
     return NextResponse.json(result)
 
@@ -94,4 +110,3 @@ Provide your analysis in this EXACT JSON format (no markdown, no backticks, pure
     return NextResponse.json({ error: "Analysis failed" }, { status: 500 })
   }
 }
-
