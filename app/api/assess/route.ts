@@ -93,14 +93,18 @@ Provide your analysis in this EXACT JSON format (no markdown, no backticks, pure
     const result = JSON.parse(cleaned)
 
     // Сохраняем в Supabase если пользователь залогинен
+    console.log("userId received:", userId)
     if (userId) {
-      await supabase.from("assessments").insert({
+      const { error } = await supabase.from("assessments").insert({
         user_id: userId,
         lang,
         answers,
         ai_result: result,
         cv_text: cvText || null
       })
+      console.log("Supabase error:", error)
+    } else {
+      console.log("No userId — not saving")
     }
 
     return NextResponse.json(result)
