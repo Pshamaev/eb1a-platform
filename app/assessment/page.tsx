@@ -278,6 +278,7 @@ const [chatLoading, setChatLoading] = useState(false)
 const [cvParsing, setCvParsing] = useState(false)
 const [cvParsed, setCvParsed] = useState(false)
   const [cvText, setCvText] = useState("")
+  const { user } = useUser()
   const t = T[lang]
   const curBlock = BLOCKS[blockIdx]
 
@@ -324,7 +325,7 @@ const [cvParsed, setCvParsed] = useState(false)
         const res = await fetch("/api/assess", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ answers: readableAnswers, lang, cvText })
+          body: JSON.stringify({ answers: readableAnswers, lang, cvText, userId: user?.id })
         })
         if (!res.ok) throw new Error("API error")
         const data = await res.json()
