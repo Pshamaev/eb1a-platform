@@ -551,7 +551,8 @@ const [cvParsed, setCvParsed] = useState(false)
             <button className="text-xs font-medium text-slate-600 hover:text-blue-600 px-2 py-1">Sign In</button>
           </SignInButton>
         </SignedOut>
-        <SignedIn>
+       <SignedIn>
+          <a href="/dashboard" className="text-xs font-medium text-slate-600 hover:text-blue-600 px-2 py-1">My Cases</a>
           <UserButton />
         </SignedIn>
       </div>
