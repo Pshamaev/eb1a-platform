@@ -123,7 +123,7 @@ const T: Record<Lang, Record<string, any>> = {
     cta_expert: "Проверка адвоката — $299",
     cta_retake: "Пройти заново",
     disclaimer: "⚠️ Эта оценка сгенерирована AI и носит исключительно информационный характер. Она не является юридической консультацией. Иммиграционное право сложное и зависит от конкретных фактов — результаты могут быть неточными. Всегда консультируйтесь с лицензированным американским иммиграционным адвокатом перед принятием решений.",
-    disclaimer_cta: "Консультация адвоката — $149",
+    disclaimer_cta: "Проверка адвоката — $299",
     block_A: "Блок A — Профессиональный профиль",
     block_B: "Блок B — Критерии EB-1A (10)",
     block_C: "Блок C — Национальный интерес (NIW)",
@@ -179,7 +179,7 @@ const T: Record<Lang, Record<string, any>> = {
     },
   },
   hi: {
-    title: "निःशुल्क EB1A / NIW मूल्यांकन", subtitle: "प्रश्नों का उत्तर दें। AI-संचालित विश्लेषण पाएं।", anonymous: "गुमनाम · ~5 मिनट", start: "मूल्यांकन शुरू करें", next: "जारी रखें", back: "वापस", analyze: "विश्लेषण करें", analyzing: "AI विश्लेषण कर रहा है...", other_label: "अन्य:", other_placeholder: "अपने शब्दों में...", result_title: "परिणाम", eb1a: "EB1A — असाधारण क्षमता", niw: "EB2-NIW — राष्ट्रीय हित", strong: "मजबूत", moderate: "मध्यम", weak: "कमजोर", strong_criteria: "मजबूत", weak_criteria: "विकास चाहिए", recommendation: "सिफारिश", next_steps: "अगले कदम", timeline: "समयरेखा", alt_visas: "वैकल्पिक वीजा", evidence_gaps: "गायब साक्ष्य", cta_build: "गहन AI विश्लेषण — $49", cta_expert: "विशेषज्ञ — $149", cta_retake: "फिर से",
+    title: "निःशुल्क EB1A / NIW मूल्यांकन", subtitle: "प्रश्नों का उत्तर दें। AI-संचालित विश्लेषण पाएं।", anonymous: "गुमनाम · ~5 मिनट", start: "मूल्यांकन शुरू करें", next: "जारी रखें", back: "वापस", analyze: "विश्लेषण करें", analyzing: "AI विश्लेषण कर रहा है...", other_label: "अन्य:", other_placeholder: "अपने शब्दों में...", result_title: "परिणाम", eb1a: "EB1A — असाधारण क्षमता", niw: "EB2-NIW — राष्ट्रीय हित", strong: "मजबूत", moderate: "मध्यम", weak: "कमजोर", strong_criteria: "मजबूत", weak_criteria: "विकास चाहिए", recommendation: "सिफारिश", next_steps: "अगले कदम", timeline: "समयरेखा", alt_visas: "वैकल्पिक वीजा", evidence_gaps: "गायब साक्ष्य", cta_build: "गहन AI विश्लेषण — $49", cta_expert: "वकील समीक्षा — $299", cta_retake: "फिर से",
     disclaimer: "⚠️ यह मूल्यांकन AI द्वारा उत्पन्न किया गया है और केवल सूचनात्मक उद्देश्यों के लिए है। यह कानूनी सलाह नहीं है। कोई भी निर्णय लेने से पहले हमेशा एक लाइसेंस प्राप्त अमेरिकी आप्रवासन वकील से परामर्श करें।",
     disclaimer_cta: "वकील समीक्षा — $299",
     block_A: "A — प्रोफ़ाइल", block_B: "B — EB-1A", block_C: "C — NIW", block_D: "D — साक्ष्य", step: (s: number, t: number) => `${s}/${t}`,
