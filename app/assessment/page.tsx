@@ -526,6 +526,9 @@ const [cvParsed, setCvParsed] = useState(false)
         {/* CTAs */}
         <div className="grid gap-3">
           <button onClick={() => handleCheckout("build")} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-colors shadow-md text-sm">{t.cta_build}</button>
+         <SignedIn>
+            <a href="/dashboard" className="w-full block text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-colors shadow-md text-sm mb-1">View My Dashboard →</a>
+          </SignedIn>
           <button onClick={() => handleCheckout("expert")} className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-4 rounded-xl border border-slate-200 text-sm">{t.cta_expert}</button>
           <button onClick={() => { setBlockIdx(-1); setAnswers({}); setOther({}); setAiResult(null); setAiError(false) }}
             className="text-slate-400 text-sm py-2 hover:text-slate-600">{t.cta_retake}</button>
