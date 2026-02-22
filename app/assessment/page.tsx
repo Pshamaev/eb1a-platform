@@ -529,6 +529,17 @@ const [cvParsed, setCvParsed] = useState(false)
          <SignedIn>
             <a href="/dashboard" className="w-full block text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-colors shadow-md text-sm mb-1">View My Dashboard →</a>
           </SignedIn>
+          <SignedIn>
+            <a href="/dashboard" className="w-full block text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-colors shadow-md text-sm">View My Dashboard →</a>
+          </SignedIn>
+          <SignedOut>
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center mb-1">
+              <p className="text-sm text-slate-600 mb-3">💾 Sign up to save your results and download your assessment report</p>
+              <SignInButton mode="modal">
+                <button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm">Create Free Account to Save Results</button>
+              </SignInButton>
+            </div>
+          </SignedOut>
           <button onClick={() => handleCheckout("expert")} className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-4 rounded-xl border border-slate-200 text-sm">{t.cta_expert}</button>
           <button onClick={() => { setBlockIdx(-1); setAnswers({}); setOther({}); setAiResult(null); setAiError(false) }}
             className="text-slate-400 text-sm py-2 hover:text-slate-600">{t.cta_retake}</button>
