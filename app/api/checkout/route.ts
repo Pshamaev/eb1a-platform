@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       "line_items[0][price_data][unit_amount]": String(p.amount),
       "line_items[0][quantity]": "1",
       mode: "payment",
-      success_url: `${origin}/assessment?success=true`,
+      success_url: product === "deep_analysis" ? `${origin}/deep-analysis?success=true` : `${origin}/assessment?success=true`,,
       cancel_url: `${origin}/assessment?canceled=true`,
     })
 
