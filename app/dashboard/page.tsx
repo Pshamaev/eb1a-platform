@@ -247,6 +247,17 @@ export default function Dashboard() {
               <a href="/assessment" className="block w-full text-center bg-white border border-slate-200 text-slate-700 text-sm font-semibold py-3 rounded-xl hover:bg-slate-50 shadow-sm">
                 + New Assessment
               </a>
+              <button
+                onClick={async () => {
+                  if (confirm("Are you sure you want to delete your account? This cannot be undone.")) {
+                    await user.delete()
+                    window.location.href = "/assessment"
+                  }
+                }}
+                className="block w-full text-center text-red-400 hover:text-red-600 text-xs py-2"
+              >
+                Delete Account
+              </button>
             </div>
           </div>
         )}
