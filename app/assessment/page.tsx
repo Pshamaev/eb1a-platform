@@ -526,10 +526,7 @@ const [cvParsed, setCvParsed] = useState(false)
         {/* CTAs */}
         <div className="grid gap-3">
           <button onClick={() => handleCheckout("build")} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-colors shadow-md text-sm">{t.cta_build}</button>
-         <SignedIn>
-            <a href="/dashboard" className="w-full block text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-colors shadow-md text-sm mb-1">View My Dashboard →</a>
-          </SignedIn>
-          <SignedIn>
+                  <SignedIn>
             <a href="/dashboard" className="w-full block text-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl transition-colors shadow-md text-sm">View My Dashboard →</a>
           </SignedIn>
           <SignedOut>
