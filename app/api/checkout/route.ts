@@ -7,9 +7,14 @@ const PRODUCTS = {
     description: "AI-powered EB1A/NIW petition builder with full case management",
   },
   expert: {
-    name: "Expert Attorney Review",
-    amount: 14900, // $149
+    name: "Attorney Review",
+    amount: 29900, // $299
     description: "Professional review of your immigration case by a licensed attorney",
+  },
+  deep_analysis: {
+    name: "Deep AI Analysis",
+    amount: 4900, // $49
+    description: "Comprehensive AI-powered analysis of your EB1A/NIW case with CV review and full strategy",
   },
 }
 
